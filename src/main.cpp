@@ -2,7 +2,7 @@
 #include <memory>
 
 #include "volume.h"
-#include "grid_vdb.h"
+#include "grids/grid_vdb.h"
 
 int main(int argc, char** argv) {
     std::string path = argc > 1 ? argv[1] : "/home/niko/render-data/volumetric/smoke.vdb";

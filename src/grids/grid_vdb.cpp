@@ -39,6 +39,7 @@ std::tuple<float, float> GridOpenVDB::minorant_majorant() const {
 }
 
 std::tuple<glm::ivec3, glm::ivec3> GridOpenVDB::index_aabb() const {
+    if (is_empty()) return { glm::ivec3(0), glm::ivec3(0) }; // avoid returning (+inf, -inf)
     const openvdb::CoordBBox box = grid->evalActiveVoxelBoundingBox();
     const glm::ivec3 lo = glm::ivec3(box.min().x(), box.min().y(), box.min().z());
     const glm::ivec3 hi = glm::ivec3(box.max().x(), box.max().y(), box.max().z());
@@ -46,6 +47,7 @@ std::tuple<glm::ivec3, glm::ivec3> GridOpenVDB::index_aabb() const {
 }
 
 std::tuple<glm::vec3, glm::vec3> GridOpenVDB::world_aabb() const {
+    if (is_empty()) return { glm::vec3(0), glm::vec3(0) }; // avoid returning (+inf, -inf)
     const auto [ibb_min, ibb_max] = index_aabb();
     const glm::vec3 lo = glm::vec3(transform * glm::vec4(ibb_min, 1.f));
     const glm::vec3 hi = glm::vec3(transform * glm::vec4(ibb_max, 1.f));

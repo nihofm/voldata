@@ -5,7 +5,7 @@ float Grid::operator[](const glm::ivec3& ipos) const { return fetch(ipos); }
 std::string Grid::to_string(const std::string& indent) const {
     std::stringstream out;
     const auto [ibb_min, ibb_max] = index_aabb();
-    const glm::ivec3 size = ibb_max - ibb_min + 1; // inclusive bounds
+    const glm::ivec3 size = ibb_max - ibb_min; // inclusive bounds
     out << indent << "AABB (index-space): " << glm::to_string(ibb_min) << " / " << glm::to_string(ibb_max) << std::endl;
     out << indent << "size: " << glm::to_string(size) << std::endl;
     const auto [min, maj] = minorant_majorant();

@@ -18,6 +18,7 @@ public:
     virtual std::tuple<glm::vec3, glm::vec3> world_aabb() const = 0;
 
     virtual size_t num_voxels() const = 0;
+    virtual bool is_empty() const { return num_voxels() == 0; }
 
     virtual std::string to_string(const std::string& indent="") const;
 
