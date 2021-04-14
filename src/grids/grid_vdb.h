@@ -1,24 +1,24 @@
+#pragma once
+
 #include "grid.h"
 
 #include <filesystem>
 namespace fs = std::filesystem;
 #include <openvdb/openvdb.h>
 
-class GridOpenVDB : public Grid {
+class OpenVDBGrid : public Grid {
 public:
-    GridOpenVDB(const fs::path& filename, const std::string& gridname = "density");
-    ~GridOpenVDB();
+    OpenVDBGrid(const fs::path& filename, const std::string& gridname = "density");
+    virtual ~OpenVDBGrid();
 
-    float fetch(const glm::ivec3& ipos) const;
-
+    float lookup(const glm::ivec3& ipos) const;
     std::tuple<float, float> minorant_majorant() const;
-    std::tuple<glm::ivec3, glm::ivec3> index_aabb() const;
-    std::tuple<glm::vec3, glm::vec3> world_aabb() const;
-
+    glm::ivec3 index_extent() const;
     size_t num_voxels() const;
-
+    size_t size_bytes() const;
     virtual std::string to_string(const std::string& indent="") const override;
 
     // data
     openvdb::FloatGrid::Ptr grid;
+    glm::ivec3 ibb_min, ibb_max;
 };

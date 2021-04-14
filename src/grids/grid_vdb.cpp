@@ -1,6 +1,6 @@
 #include "grid_vdb.h"
 
-GridOpenVDB::GridOpenVDB(const fs::path& filename, const std::string& gridname) {
+OpenVDBGrid::OpenVDBGrid(const fs::path& filename, const std::string& gridname) {
     // open file
     openvdb::initialize();
     openvdb::io::File vdb_file(filename.string());
@@ -17,48 +17,46 @@ GridOpenVDB::GridOpenVDB(const fs::path& filename, const std::string& gridname) 
     // cast to FloatGrid
     if (!baseGrid) throw std::runtime_error("No OpenVDB grid with name \"" + gridname + "\" found in " + filename.string());
     grid = openvdb::gridPtrCast<openvdb::FloatGrid>(baseGrid);
+    // compute index bounding box
+    const openvdb::CoordBBox box = grid->evalActiveVoxelBoundingBox();
+    ibb_min = num_voxels() == 0 ? glm::ivec3(0) : glm::ivec3(box.min().x(), box.min().y(), box.min().z());
+    ibb_max = num_voxels() == 0 ? glm::ivec3(0) : glm::ivec3(box.max().x(), box.max().y(), box.max().z());
     // extract transform
     if (!grid->transform().isLinear()) throw std::runtime_error("Only linear transformations supported!");
     const openvdb::Mat4R mat4 = grid->transform().baseMap()->getAffineMap()->getMat4();
     for (int i = 0; i < 4; ++i)
         for (int j = 0; j < 4; ++j)
             transform[i][j] = mat4(i, j);
+    // TODO translate to origin in index-space
 }
 
-GridOpenVDB::~GridOpenVDB() {}
+OpenVDBGrid::~OpenVDBGrid() {}
 
-float GridOpenVDB::fetch(const glm::ivec3& ipos) const {
-    auto acc = grid->getConstAccessor(); // slow, use own accessor for more perf
-    return acc.getValue(openvdb::Coord(ipos.x, ipos.y, ipos.z));
+float OpenVDBGrid::lookup(const glm::ivec3& ipos) const {
+    auto acc = grid->getConstAccessor(); // slow but convenient, use own accessor for more perf
+    return acc.getValue(openvdb::Coord(ipos.x + ibb_min.x, ipos.y + ibb_min.y, ipos.z + ibb_min.z));
 }
 
-std::tuple<float, float> GridOpenVDB::minorant_majorant() const {
+std::tuple<float, float> OpenVDBGrid::minorant_majorant() const {
     float min, maj;
     grid->evalMinMax(min, maj);
     return { min, maj };
 }
 
-std::tuple<glm::ivec3, glm::ivec3> GridOpenVDB::index_aabb() const {
-    if (is_empty()) return { glm::ivec3(0), glm::ivec3(0) }; // avoid returning (+inf, -inf)
-    const openvdb::CoordBBox box = grid->evalActiveVoxelBoundingBox();
-    const glm::ivec3 lo = glm::ivec3(box.min().x(), box.min().y(), box.min().z());
-    const glm::ivec3 hi = glm::ivec3(box.max().x(), box.max().y(), box.max().z());
-    return { lo, hi };
+glm::ivec3 OpenVDBGrid::index_extent() const {
+    if (num_voxels() == 0) return glm::ivec3(0);
+    return ibb_max - ibb_min + 1; // OpenVDB uses exclusive bounds
 }
 
-std::tuple<glm::vec3, glm::vec3> GridOpenVDB::world_aabb() const {
-    if (is_empty()) return { glm::vec3(0), glm::vec3(0) }; // avoid returning (+inf, -inf)
-    const auto [ibb_min, ibb_max] = index_aabb();
-    const glm::vec3 lo = glm::vec3(transform * glm::vec4(ibb_min, 1.f));
-    const glm::vec3 hi = glm::vec3(transform * glm::vec4(ibb_max, 1.f));
-    return { lo, hi };
-}
-
-size_t GridOpenVDB::num_voxels() const {
+size_t OpenVDBGrid::num_voxels() const {
     return size_t(grid->activeVoxelCount());
 }
 
-std::string GridOpenVDB::to_string(const std::string& indent) const {
+size_t OpenVDBGrid::size_bytes() const {
+    return grid->memUsage();
+}
+
+std::string OpenVDBGrid::to_string(const std::string& indent) const {
     std::stringstream out;
     out << Grid::to_string(indent) << std::endl;
     grid->print(out);
