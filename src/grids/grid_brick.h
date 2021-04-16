@@ -25,10 +25,7 @@ public:
     const glm::uvec3 n_bricks;
     const std::tuple<float, float> min_maj;
     std::atomic<size_t> brick_counter;
-    Buf3D<uint32_t> indirection;
-    Buf3D<uint32_t> range;
-    Buf3D<uint8_t> atlas;
-    //std::vector<uint32_t> offset_data;      // 4x uint8_t: (ptr_x, ptr_y, ptr_z, unused)
-    //std::vector<uint32_t> range_data;       // 2x float16: (minorant, majorant)
-    //std::vector<uint8_t> atlas_data;        // 512x uint8_t: brick atlas data
+    Buf3D<uint32_t> indirection;            // 3x 10bits uint: (ptr_x, ptr_y, ptr_z, unused)
+    Buf3D<uint32_t> range;                  // 2x float16: (minorant, majorant)
+    Buf3D<uint8_t> atlas;                   // 512x uint8_t: 8x8x8 normalized brick data
 };
