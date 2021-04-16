@@ -33,7 +33,7 @@ OpenVDBGrid::OpenVDBGrid(const fs::path& filename, const std::string& gridname) 
 OpenVDBGrid::~OpenVDBGrid() {}
 
 float OpenVDBGrid::lookup(const glm::ivec3& ipos) const {
-    auto acc = grid->getConstAccessor(); // slow but convenient, use own accessor for more perf
+    auto acc = grid->getConstUnsafeAccessor(); // use own accessor for more perf
     return acc.getValue(openvdb::Coord(ipos.x + ibb_min.x, ipos.y + ibb_min.y, ipos.z + ibb_min.z));
 }
 
