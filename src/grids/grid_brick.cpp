@@ -12,7 +12,7 @@ static const uint32_t BRICK_SIZE = 8;
 static const uint32_t BITS_PER_AXIS = 10;
 static const uint32_t MAX_BRICKS = 1 << BITS_PER_AXIS;
 static const uint32_t VOXELS_PER_BRICK = BRICK_SIZE * BRICK_SIZE * BRICK_SIZE;
-static const float EPS = 1e-8f;
+static const float EPS = 1e-6f;
 
 // ----------------------------------------------
 // encoding helpers
@@ -72,14 +72,12 @@ BrickGrid::BrickGrid(const Grid& grid) :
                 const glm::uvec3 brick = glm::uvec3(bx, by, bz);
                 indirection[brick] = 0;
                 range[brick] = encode_range(0.f, 0.f);
-                // compute brick range and save grid values
+                // compute local range over dilated brick
                 float local_min = FLT_MAX, local_max = FLT_MIN;
-                float brick_cache[BRICK_SIZE * BRICK_SIZE * BRICK_SIZE];
-                for (size_t z = 0; z < BRICK_SIZE; ++z) {
-                    for (size_t y = 0; y < BRICK_SIZE; ++y) {
-                        for (size_t x = 0; x < BRICK_SIZE; ++x) {
+                for (int z = -1; z < int(BRICK_SIZE) + 1; ++z) {
+                    for (int y = -1; y < int(BRICK_SIZE) + 1; ++y) {
+                        for (int x = -1; x < int(BRICK_SIZE) + 1; ++x) {
                             const float value = grid.lookup(brick * BRICK_SIZE + glm::uvec3(x, y, z));
-                            brick_cache[z * BRICK_SIZE * BRICK_SIZE + y * BRICK_SIZE + x] = value;
                             local_min = std::min(local_min, value);
                             local_max = std::max(local_max, value);
                         }
@@ -96,15 +94,14 @@ BrickGrid::BrickGrid(const Grid& grid) :
                 for (size_t z = 0; z < BRICK_SIZE; ++z)
                     for (size_t y = 0; y < BRICK_SIZE; ++y)
                         for (size_t x = 0; x < BRICK_SIZE; ++x)
-                            atlas[ptr * BRICK_SIZE + glm::uvec3(x, y, z)] = encode_voxel(brick_cache[z * BRICK_SIZE * BRICK_SIZE + y * BRICK_SIZE + x], local_min, local_max);
+                            atlas[ptr * BRICK_SIZE + glm::uvec3(x, y, z)] = encode_voxel(grid.lookup(brick * BRICK_SIZE + glm::uvec3(x, y, z)), local_min, local_max);
             }
         }
     });
 
-    // TODO prune atlas (run separate passes for range/ptr and data)
-    const size_t atlas_slices = ceil(brick_counter / float(n_bricks.x * n_bricks.y));
-    std::cout << "PRUNED ATLAS SLICES: " << atlas_slices << std::endl;
-    //atlas.resize(glm::uvec3(n_bricks.x, n_bricks.y, atlas_slices));
+    // prune atlas in z dimension
+    const size_t atlas_slices = BRICK_SIZE * std::round(std::ceil(brick_counter / float(n_bricks.x * n_bricks.y)));
+    atlas.prune(atlas_slices);
 }
 
 BrickGrid::BrickGrid(const std::shared_ptr<Grid>& grid) : BrickGrid(*grid) {}
@@ -134,12 +131,12 @@ size_t BrickGrid::size_bytes() const {
 }
 
 std::string BrickGrid::to_string(const std::string& indent) const {
-    // TODO print additional info?
     std::stringstream out;
     out << Grid::to_string(indent) << std::endl;
     out << indent << "voxel dim: " << glm::to_string(index_extent()) << std::endl;
     out << indent << "brick dim: " << glm::to_string(n_bricks) << std::endl;
-    out << indent << "bricks in atlas: " << brick_counter << std::endl;
+    const size_t bricks_allocd = brick_counter, bricks_capacity = atlas.size().x * atlas.size().y * atlas.size().z / VOXELS_PER_BRICK;
+    out << indent << "bricks in atlas: " << bricks_allocd << " / " << bricks_capacity << " (" << uint32_t(std::round(100 * bricks_allocd / float(bricks_capacity))) << "%)" << std::endl;
     out << indent << "atlas dim: " << glm::to_string(atlas.size()) << std::endl;
     return out.str();
 }

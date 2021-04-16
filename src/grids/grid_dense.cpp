@@ -56,7 +56,7 @@ DenseGrid::DenseGrid(const std::shared_ptr<Grid>& grid) : DenseGrid(*grid) {}
 DenseGrid::~DenseGrid() {}
 
 float DenseGrid::lookup(const glm::ivec3& ipos) const {
-    // TODO: bounds checks or ignore?
+    if (glm::any(glm::lessThan(ipos, glm::ivec3(0))) || glm::any(glm::greaterThanEqual(ipos, n_voxels))) return 0.f;
     const size_t idx = ipos.z * n_voxels.x * n_voxels.y + ipos.y * n_voxels.x + ipos.x;
     return voxel_data[idx] / 255.f;
 }

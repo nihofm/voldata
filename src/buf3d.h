@@ -14,6 +14,11 @@ public:
     inline const T& operator[](const glm::uvec3& at) const { return data[linear_index(at)]; }
     inline glm::uvec3 size() const { return stride; }
 
+    inline void prune(size_t slices) {
+        this->stride.z = slices;
+        data.resize(stride.x * stride.y * stride.z);
+    }
+
     inline void resize(const glm::uvec3& stride) {
         this->stride = stride;
         data.resize(size_t(stride.x) * stride.y * stride.z);
