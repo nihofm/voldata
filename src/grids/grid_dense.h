@@ -7,7 +7,7 @@
 
 class DenseGrid : public Grid {
 public:
-    DenseGrid(size_t w, size_t h, size_t d, const uint8_t* data);
+    DenseGrid(size_t w, size_t h, size_t d, const float* data);
     DenseGrid(const Grid& grid);
     DenseGrid(const std::shared_ptr<Grid>& grid);
     virtual ~DenseGrid();

@@ -30,6 +30,36 @@ OpenVDBGrid::OpenVDBGrid(const fs::path& filename, const std::string& gridname) 
     // TODO translate to origin in index-space
 }
 
+OpenVDBGrid::OpenVDBGrid(const Grid& other) : Grid(other) {
+    const auto [minorant, majorant] = other.minorant_majorant();
+    grid = openvdb::FloatGrid::create(minorant);
+    grid->setGridClass(openvdb::GRID_FOG_VOLUME);
+    const auto isize = other.index_extent();
+    auto acc = grid->getAccessor();
+    for (int z = 0; z < isize.z; ++z) {
+        for (int y = 0; y < isize.y; ++y) {
+            for (int x = 0; x < isize.x; ++x) {
+                const float value = other.lookup(glm::ivec3(x, y, z));
+                if (value > minorant)
+                    acc.setValue(openvdb::Coord(x, y, z), value);
+            }
+        }
+    }
+    grid->pruneGrid();
+    // compute index bounding box
+    const openvdb::CoordBBox box = grid->evalActiveVoxelBoundingBox();
+    ibb_min = num_voxels() == 0 ? glm::ivec3(0) : glm::ivec3(box.min().x(), box.min().y(), box.min().z());
+    ibb_max = num_voxels() == 0 ? glm::ivec3(0) : glm::ivec3(box.max().x(), box.max().y(), box.max().z());
+    // set transform
+    openvdb::Mat4R mat4;
+    for (int i = 0; i < 4; ++i)
+        for (int j = 0; j < 4; ++j)
+            mat4(i, j) = transform[i][j];
+    grid->setTransform(openvdb::math::Transform::createLinearTransform(mat4));
+}
+
+OpenVDBGrid::OpenVDBGrid(const std::shared_ptr<Grid>& other) : OpenVDBGrid(*other) {}
+
 OpenVDBGrid::~OpenVDBGrid() {}
 
 float OpenVDBGrid::lookup(const glm::ivec3& ipos) const {
@@ -40,6 +70,7 @@ float OpenVDBGrid::lookup(const glm::ivec3& ipos) const {
 std::tuple<float, float> OpenVDBGrid::minorant_majorant() const {
     float min, maj;
     grid->evalMinMax(min, maj);
+    min = std::min(min, grid->background());
     return { min, maj };
 }
 

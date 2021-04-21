@@ -9,6 +9,8 @@ namespace fs = std::filesystem;
 class OpenVDBGrid : public Grid {
 public:
     OpenVDBGrid(const fs::path& filename, const std::string& gridname = "density");
+    OpenVDBGrid(const Grid& grid);
+    OpenVDBGrid(const std::shared_ptr<Grid>& grid);
     virtual ~OpenVDBGrid();
 
     float lookup(const glm::ivec3& ipos) const;
