@@ -1,4 +1,4 @@
-project(voldata LANGUAGES C CXX CUDA)
+project(voldata LANGUAGES C CXX)# CUDA)
 cmake_minimum_required(VERSION 3.10)
 
 # ---------------------------------------------------------------------
@@ -46,3 +46,4 @@ include_directories(submodules/openvdb)
 
 include_directories(src)
 add_subdirectory(src)
+add_subdirectory(tools)

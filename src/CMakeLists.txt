@@ -7,8 +7,8 @@ file(GLOB_RECURSE HEADERS "*.h" "grids/*.h")
 file(GLOB_RECURSE SOURCES "*.cpp" "grids/*.cpp")
 
 # define targets
-add_executable(${TARGET} ${HEADERS} ${SOURCES})
-set_target_properties(${TARGET} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}")
+add_library(${TARGET} SHARED ${SOURCES} ${HEADERS})
+#generate_export_header(${TARGET}) # TODO win support
 
 #pybind11_add_module(${TARGET_PY} ${SOURCES})
 #pybind11_strip(${TARGET_PY})
@@ -27,9 +27,9 @@ target_link_libraries(${TARGET} stdc++fs)
 #target_link_libraries(${TARGET_PY} PRIVATE cppgl stdc++fs)
 
 # CUDA
-find_package(CUDA REQUIRED)
-include_directories(${CUDA_INCLUDE_DIRS})
-target_link_libraries(${TARGET} ${CUDA_LIBRARIES})
+#find_package(CUDA REQUIRED)
+#include_directories(${CUDA_INCLUDE_DIRS})
+#target_link_libraries(${TARGET} ${CUDA_LIBRARIES})
 #target_link_libraries(${TARGET_PY} PRIVATE ${CUDA_LIBRARIES})
 
 # pybind11
