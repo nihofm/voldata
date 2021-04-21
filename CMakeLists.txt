@@ -44,6 +44,5 @@ include_directories(submodules/openvdb)
 # ---------------------------------------------------------------------
 # traverse source tree
 
-include_directories(src)
-add_subdirectory(src)
+add_subdirectory(voldata)
 add_subdirectory(tools)

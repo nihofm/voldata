@@ -1,6 +1,6 @@
 #pragma once
 
-#include "grid.h"
+#include "../grid.h"
 
 #include <filesystem>
 namespace fs = std::filesystem;

@@ -1,9 +1,9 @@
 #include <string>
 #include <memory>
 
-#include "grids/grid_vdb.h"
-#include "grids/grid_dense.h"
-#include "grids/grid_brick.h"
+#include "voldata/grids/grid_vdb.h"
+#include "voldata/grids/grid_dense.h"
+#include "voldata/grids/grid_brick.h"
 
 int main(int argc, char** argv) {
     std::string path = argc > 1 ? argv[1] : "/home/niko/render-data/volumetric/smoke.vdb";

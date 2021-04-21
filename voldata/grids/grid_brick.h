@@ -1,8 +1,7 @@
 #pragma once
 
-#include "grid.h"
-#include "buf3d.h"
-#include "grid_vdb.h"
+#include "../grid.h"
+#include "../buf3d.h"
 
 #include <vector>
 #include <memory>
