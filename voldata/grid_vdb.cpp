@@ -1,6 +1,6 @@
 #include "grid_vdb.h"
 
-namespace VOLDATA_NAMESPACE {
+namespace voldata {
 
 OpenVDBGrid::OpenVDBGrid(const fs::path& filename, const std::string& gridname) {
     // open file

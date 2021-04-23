@@ -4,7 +4,7 @@
 #include <iostream>
 #include <sstream>
 
-namespace VOLDATA_NAMESPACE { // default: voldata
+namespace voldata {
 
 class Dictionary {
 public:

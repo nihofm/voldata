@@ -8,7 +8,7 @@ namespace fs = std::filesystem;
 #include "dict.h"
 #include "grid.h"
 
-namespace VOLDATA_NAMESPACE { // default: voldata
+namespace voldata {
 
 class Volume {
 public:

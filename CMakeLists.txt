@@ -12,8 +12,6 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
 # ---------------------------------------------------------------------
 # options
 
-set(VOLDATA_NAMESPACE "voldata")
-
 # ---------------------------------------------------------------------
 # compiler flags
 
@@ -43,9 +41,6 @@ include_directories(submodules/openvdb)
 
 # ---------------------------------------------------------------------
 # traverse source tree
-
-message(STATUS "namespace: ${VOLDATA_NAMESPACE}")
-add_definitions(-DVOLDATA_NAMESPACE=${VOLDATA_NAMESPACE})
 
 add_subdirectory(voldata)
 add_subdirectory(tools)

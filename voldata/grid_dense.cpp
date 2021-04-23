@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <execution>
 
-namespace VOLDATA_NAMESPACE {
+namespace voldata {
 
 DenseGrid::DenseGrid(const Grid& grid) :
     Grid(grid),

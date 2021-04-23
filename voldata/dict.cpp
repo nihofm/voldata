@@ -13,7 +13,7 @@ std::string demangle(const char* mangled) {
 std::string demangle(const char* name) { return name; }
 #endif // _GNUG_
 
-namespace VOLDATA_NAMESPACE {
+namespace voldata {
 
 std::string Dictionary::to_string(const std::string& indent) const {
     std::stringstream out;

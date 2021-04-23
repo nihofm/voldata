@@ -7,7 +7,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/string_cast.hpp>
 
-namespace VOLDATA_NAMESPACE { // default: voldata
+namespace voldata {
 
 class Grid {
 public:

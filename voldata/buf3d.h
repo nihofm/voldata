@@ -3,7 +3,7 @@
 #include <vector>
 #include <glm/glm.hpp>
 
-namespace VOLDATA_NAMESPACE { // default: voldata
+namespace voldata {
 
 template <typename T> class Buf3D {
 public:

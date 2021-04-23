@@ -1,6 +1,6 @@
 #include "grid.h"
 
-namespace VOLDATA_NAMESPACE {
+namespace voldata {
 
 float Grid::operator[](const glm::ivec3& ipos) const { return lookup(ipos); }
 

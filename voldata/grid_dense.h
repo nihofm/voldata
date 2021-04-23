@@ -5,7 +5,7 @@
 #include <vector>
 #include <memory>
 
-namespace VOLDATA_NAMESPACE { // default: voldata
+namespace voldata {
 
 class DenseGrid : public Grid {
 public:

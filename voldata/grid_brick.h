@@ -7,7 +7,7 @@
 #include <memory>
 #include <atomic>
 
-namespace VOLDATA_NAMESPACE { // default: voldata
+namespace voldata {
 
 class BrickGrid : public Grid {
 public:

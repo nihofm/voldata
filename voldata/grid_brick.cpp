@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <execution>
 
-namespace VOLDATA_NAMESPACE {
+namespace voldata {
 
 // ----------------------------------------------
 // constants

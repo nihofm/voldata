@@ -12,7 +12,7 @@
 #include "grid_brick.h"
 #include "grid_dense.h"
 
-namespace VOLDATA_NAMESPACE {
+namespace voldata {
 
 Volume::Volume() : grid_frame(0) {}
 

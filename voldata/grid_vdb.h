@@ -6,7 +6,7 @@
 namespace fs = std::filesystem;
 #include <openvdb/openvdb.h>
 
-namespace VOLDATA_NAMESPACE { // default: voldata
+namespace voldata {
 
 class OpenVDBGrid : public Grid {
 public:
