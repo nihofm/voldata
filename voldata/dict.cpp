@@ -13,6 +13,8 @@ std::string demangle(const char* mangled) {
 std::string demangle(const char* name) { return name; }
 #endif // _GNUG_
 
+namespace VOLDATA_NAMESPACE {
+
 std::string Dictionary::to_string(const std::string& indent) const {
     std::stringstream out;
     out << indent << "size: " << map.size() << std::endl;
@@ -20,4 +22,6 @@ std::string Dictionary::to_string(const std::string& indent) const {
     for (auto [key, value] : map)
         out << key << " (" << demangle(value.type().name()) << "), ";
     return out.str();
+}
+
 }

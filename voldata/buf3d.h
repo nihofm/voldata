@@ -3,6 +3,8 @@
 #include <vector>
 #include <glm/glm.hpp>
 
+namespace VOLDATA_NAMESPACE { // default: voldata
+
 template <typename T> class Buf3D {
 public:
     Buf3D(const glm::uvec3& stride = glm::uvec3(0)) :
@@ -37,3 +39,5 @@ protected:
     glm::uvec3 stride;
     std::vector<T> data;
 };
+
+}

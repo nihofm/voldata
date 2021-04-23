@@ -1,10 +1,12 @@
 #pragma once
 
-#include "../grid.h"
+#include "grid.h"
 
 #include <filesystem>
 namespace fs = std::filesystem;
 #include <openvdb/openvdb.h>
+
+namespace VOLDATA_NAMESPACE { // default: voldata
 
 class OpenVDBGrid : public Grid {
 public:
@@ -24,3 +26,5 @@ public:
     openvdb::FloatGrid::Ptr grid;
     glm::ivec3 ibb_min, ibb_max;
 };
+
+}

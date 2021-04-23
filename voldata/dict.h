@@ -4,6 +4,8 @@
 #include <iostream>
 #include <sstream>
 
+namespace VOLDATA_NAMESPACE { // default: voldata
+
 class Dictionary {
 public:
     Dictionary() {}
@@ -13,6 +15,7 @@ public:
     void clear() { map.clear(); }
 
     void set(const std::string& key, const std::any& value) { map[key] = value; }
+
     std::any get(const std::string& key) { return map[key]; }
     template <typename T> T get(const std::string& key) { return std::any_cast<T>(map[key]); }
 
@@ -26,3 +29,5 @@ public:
 };
 
 inline std::ostream& operator<<(std::ostream& out, const Dictionary& dict) { return out << dict.to_string(); }
+
+}

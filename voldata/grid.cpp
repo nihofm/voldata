@@ -1,5 +1,7 @@
 #include "grid.h"
 
+namespace VOLDATA_NAMESPACE {
+
 float Grid::operator[](const glm::ivec3& ipos) const { return lookup(ipos); }
 
 float Grid::operator[](const glm::vec3& wpos) const { return lookup_world(wpos); }
@@ -43,3 +45,5 @@ std::string Grid::to_string(const std::string& indent) const {
 }
 
 std::ostream& operator<<(std::ostream& out, const Grid& grid) { return out << grid.to_string(); }
+
+}

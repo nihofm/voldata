@@ -12,6 +12,8 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
 # ---------------------------------------------------------------------
 # options
 
+set(VOLDATA_NAMESPACE "voldata")
+
 # ---------------------------------------------------------------------
 # compiler flags
 
@@ -29,11 +31,9 @@ add_compile_options(-Wall -Wno-unused-parameter -Wno-unused-variable -Wno-deprec
 
 set(OPENVDB_BUILD_BINARIES OFF CACHE BOOL "disable openvdb binaries" FORCE)
 #set(OPENVDB_BUILD_PYTHON_MODULE ON CACHE BOOL "enable openvdb python module" FORCE)
-#add_subdirectory(submodules/glm EXCLUDE_FROM_ALL)
 add_subdirectory(submodules/openvdb)
 
 include_directories(submodules)
-include_directories(submodules/glm)
 include_directories(submodules/openvdb)
 
 # ---------------------------------------------------------------------
@@ -43,6 +43,9 @@ include_directories(submodules/openvdb)
 
 # ---------------------------------------------------------------------
 # traverse source tree
+
+message(STATUS "namespace: ${VOLDATA_NAMESPACE}")
+add_definitions(-DVOLDATA_NAMESPACE=${VOLDATA_NAMESPACE})
 
 add_subdirectory(voldata)
 add_subdirectory(tools)

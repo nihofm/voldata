@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <execution>
 
+namespace VOLDATA_NAMESPACE {
+
 // ----------------------------------------------
 // constants
 
@@ -139,4 +141,6 @@ std::string BrickGrid::to_string(const std::string& indent) const {
     out << indent << "bricks in atlas: " << bricks_allocd << " / " << bricks_capacity << " (" << uint32_t(std::round(100 * bricks_allocd / float(bricks_capacity))) << "%)" << std::endl;
     out << indent << "atlas dim: " << glm::to_string(atlas.size()) << std::endl;
     return out.str();
+}
+
 }

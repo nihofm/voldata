@@ -1,11 +1,13 @@
 #pragma once
 
-#include "../grid.h"
-#include "../buf3d.h"
+#include "grid.h"
+#include "buf3d.h"
 
 #include <vector>
 #include <memory>
 #include <atomic>
+
+namespace VOLDATA_NAMESPACE { // default: voldata
 
 class BrickGrid : public Grid {
 public:
@@ -28,3 +30,5 @@ public:
     Buf3D<uint32_t> range;                  // 2x float16: (minorant, majorant)
     Buf3D<uint8_t> atlas;                   // 512x uint8_t: 8x8x8 normalized brick data
 };
+
+}

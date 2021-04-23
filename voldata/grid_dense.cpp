@@ -4,6 +4,54 @@
 #include <algorithm>
 #include <execution>
 
+namespace VOLDATA_NAMESPACE {
+
+DenseGrid::DenseGrid(const Grid& grid) :
+    Grid(grid),
+    n_voxels(grid.index_extent()),
+    min_value(std::get<0>(grid.minorant_majorant())),
+    max_value(std::get<1>(grid.minorant_majorant()))
+
+{
+    std::vector<int> slices(n_voxels.z);
+    std::iota(slices.begin(), slices.end(), 0);
+    // encode dense grid data with 8bit per voxel
+    voxel_data.resize(n_voxels.x * n_voxels.y * n_voxels.z);
+    std::for_each(std::execution::par_unseq, slices.begin(), slices.end(),
+    [&](int z)
+    {
+        for (int y = 0; y < n_voxels.y; ++y)
+            for (int x = 0; x < n_voxels.x; ++x) {
+                const float value = grid.lookup(glm::ivec3(x, y, z));
+                const size_t idx = z * n_voxels.x * n_voxels.y + y * n_voxels.x + x;
+                voxel_data[idx] = uint8_t(std::round(255 * (value - min_value) / (max_value - min_value)));
+            }
+    });
+}
+
+DenseGrid::DenseGrid(const std::shared_ptr<Grid>& grid) : DenseGrid(*grid) {}
+
+DenseGrid::DenseGrid(size_t w, size_t h, size_t d, const uint8_t* data) :
+    Grid(),
+    n_voxels(w, h, d), 
+    min_value(0),
+    max_value(1)
+{
+    // parallel copy voxel data
+    std::vector<int> slices(n_voxels.z);
+    std::iota(slices.begin(), slices.end(), 0);
+    voxel_data.resize(n_voxels.x * n_voxels.y * n_voxels.z);
+    std::for_each(std::execution::par_unseq, slices.begin(), slices.end(),
+    [&](int z)
+    {
+        for (int y = 0; y < n_voxels.y; ++y)
+            for (int x = 0; x < n_voxels.x; ++x) {
+                const size_t idx = z * n_voxels.x * n_voxels.y + y * n_voxels.x + x;
+                voxel_data[idx] = data[idx];
+            }
+    });
+}
+
 DenseGrid::DenseGrid(size_t w, size_t h, size_t d, const float* data) :
     Grid(),
     n_voxels(w, h, d), 
@@ -44,31 +92,6 @@ DenseGrid::DenseGrid(size_t w, size_t h, size_t d, const float* data) :
     });
 }
 
-DenseGrid::DenseGrid(const Grid& grid) :
-    Grid(grid),
-    n_voxels(grid.index_extent()),
-    min_value(std::get<0>(grid.minorant_majorant())),
-    max_value(std::get<1>(grid.minorant_majorant()))
-
-{
-    std::vector<int> slices(n_voxels.z);
-    std::iota(slices.begin(), slices.end(), 0);
-    // encode dense grid data with 8bit per voxel
-    voxel_data.resize(n_voxels.x * n_voxels.y * n_voxels.z);
-    std::for_each(std::execution::par_unseq, slices.begin(), slices.end(),
-    [&](int z)
-    {
-        for (int y = 0; y < n_voxels.y; ++y)
-            for (int x = 0; x < n_voxels.x; ++x) {
-                const float value = grid.lookup(glm::ivec3(x, y, z));
-                const size_t idx = z * n_voxels.x * n_voxels.y + y * n_voxels.x + x;
-                voxel_data[idx] = uint8_t(std::round(255 * (value - min_value) / (max_value - min_value)));
-            }
-    });
-}
-
-DenseGrid::DenseGrid(const std::shared_ptr<Grid>& grid) : DenseGrid(*grid) {}
-
 DenseGrid::~DenseGrid() {}
 
 float DenseGrid::lookup(const glm::ivec3& ipos) const {
@@ -84,3 +107,5 @@ glm::ivec3 DenseGrid::index_extent() const { return n_voxels; }
 size_t DenseGrid::num_voxels() const { return size_t(n_voxels.x) * n_voxels.y * n_voxels.z; }
 
 size_t DenseGrid::size_bytes() const { return size_t(n_voxels.x) * n_voxels.y * n_voxels.z; }
+
+}

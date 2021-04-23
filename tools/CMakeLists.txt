@@ -9,5 +9,5 @@ file(GLOB_RECURSE SOURCES "*.cpp")
 add_executable(${TARGET} ${HEADERS} ${SOURCES})
 
 # includes and libraries
-include_directories(${CMAKE_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/..)
 target_link_libraries(${TARGET} voldata)

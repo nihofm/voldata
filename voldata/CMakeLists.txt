@@ -3,8 +3,8 @@ set(TARGET voldata)
 #set(TARGET_PY volpy)
 
 # glob source files
-file(GLOB_RECURSE HEADERS "*.h" "grids/*.h")
-file(GLOB_RECURSE SOURCES "*.cpp" "grids/*.cpp")
+file(GLOB_RECURSE HEADERS "*.h")
+file(GLOB_RECURSE SOURCES "*.cpp")
 
 # define targets
 add_library(${TARGET} SHARED ${SOURCES} ${HEADERS})

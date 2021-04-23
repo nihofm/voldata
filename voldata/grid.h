@@ -1,10 +1,13 @@
 #pragma once
 
 #include <tuple>
+#include <memory>
 #include <sstream>
 #include <iostream>
 #include <glm/glm.hpp>
 #include <glm/gtx/string_cast.hpp>
+
+namespace VOLDATA_NAMESPACE { // default: voldata
 
 class Grid {
 public:
@@ -32,3 +35,5 @@ public:
 };
 
 std::ostream& operator<<(std::ostream& out, const Grid& grid);
+
+}

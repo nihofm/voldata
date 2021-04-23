@@ -1,5 +1,7 @@
 #include "grid_vdb.h"
 
+namespace VOLDATA_NAMESPACE {
+
 OpenVDBGrid::OpenVDBGrid(const fs::path& filename, const std::string& gridname) {
     // open file
     openvdb::initialize();
@@ -92,4 +94,6 @@ std::string OpenVDBGrid::to_string(const std::string& indent) const {
     out << Grid::to_string(indent) << std::endl;
     grid->print(out);
     return out.str().erase(out.str().rfind("]") + 1);
+}
+
 }
