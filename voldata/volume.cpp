@@ -14,7 +14,7 @@
 
 namespace voldata {
 
-Volume::Volume() : grid_frame(0) {}
+Volume::Volume() : model(glm::mat4(1)), grid_frame(0) {}
 
 Volume::Volume(const fs::path& path) : Volume() {
     load_grid(path);
@@ -98,6 +98,28 @@ void Volume::load_grid(const fs::path& path) {
     }
     else
         throw std::runtime_error("Unable to load file extension: " + extension.string());
+}
+
+std::shared_ptr<Grid> Volume::current_grid() const {
+    return grids[grid_frame];
+}
+
+glm::mat4 Volume::get_transform() const {
+    return current_grid()->transform * model;
+}
+
+glm::vec4 Volume::to_world(const glm::vec4& index) const {
+    return get_transform() * index;
+}
+
+glm::vec4 Volume::to_index(const glm::vec4& world) const {
+    return glm::inverse(get_transform()) * world;
+}
+
+std::tuple<glm::vec3, glm::vec3> Volume::AABB() const {
+    const glm::vec3 wbb_min = glm::vec3(to_world(glm::vec4(0, 0, 0, 1)));
+    const glm::vec3 wbb_max = glm::vec3(to_world(glm::vec4(glm::vec3(current_grid()->index_extent()), 1)));
+    return { wbb_min, wbb_max };
 }
 
 }
