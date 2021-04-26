@@ -29,7 +29,6 @@ OpenVDBGrid::OpenVDBGrid(const fs::path& filename, const std::string& gridname) 
     for (int i = 0; i < 4; ++i)
         for (int j = 0; j < 4; ++j)
             transform[i][j] = mat4(i, j);
-    // TODO translate to origin in index-space
 }
 
 OpenVDBGrid::OpenVDBGrid(const Grid& other) : Grid(other) {
@@ -78,7 +77,7 @@ std::tuple<float, float> OpenVDBGrid::minorant_majorant() const {
 
 glm::ivec3 OpenVDBGrid::index_extent() const {
     if (num_voxels() == 0) return glm::ivec3(0);
-    return ibb_max - ibb_min + 1; // OpenVDB uses exclusive bounds
+    return ibb_max - ibb_min;
 }
 
 size_t OpenVDBGrid::num_voxels() const {
