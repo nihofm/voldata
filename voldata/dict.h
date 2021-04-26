@@ -16,11 +16,11 @@ public:
 
     void set(const std::string& key, const std::any& value) { map[key] = value; }
 
-    std::any get(const std::string& key) { return map[key]; }
-    template <typename T> T get(const std::string& key) { return std::any_cast<T>(map[key]); }
+    std::any& get(const std::string& key) { return map[key]; }
+    template <typename T> T& get(const std::string& key) { return std::any_cast<T>(map[key]); }
 
-    std::any operator[](const std::string& key) { return map[key]; }
-    template <typename T> T operator[](const std::string& key) { return std::any_cast<T>(map[key]); }
+    std::any& operator[](const std::string& key) { return map[key]; }
+    template <typename T> T& operator[](const std::string& key) { return std::any_cast<T>(map[key]); }
 
     std::string to_string(const std::string& indent="") const;
 
