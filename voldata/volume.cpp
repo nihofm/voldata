@@ -105,7 +105,7 @@ std::shared_ptr<Grid> Volume::current_grid() const {
 }
 
 glm::mat4 Volume::get_transform() const {
-    return current_grid()->transform * model;
+    return model * current_grid()->transform;
 }
 
 glm::vec4 Volume::to_world(const glm::vec4& index) const {

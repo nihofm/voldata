@@ -11,7 +11,7 @@ namespace voldata {
 // constants
 
 static const uint32_t BRICK_SIZE = 8;
-static const uint32_t BITS_PER_AXIS = 10;
+static const uint32_t BITS_PER_AXIS = 8; // TODO 10/10/10/2 format with 10 bits per axis
 static const uint32_t MAX_BRICKS = 1 << BITS_PER_AXIS;
 static const uint32_t VOXELS_PER_BRICK = BRICK_SIZE * BRICK_SIZE * BRICK_SIZE;
 static const float EPS = 1e-6f;
@@ -30,7 +30,7 @@ glm::vec2 decode_range(uint32_t data) {
 uint32_t encode_ptr(const glm::uvec3& ptr) {
     assert(ptr.x < MAX_BRICKS && ptr.y < MAX_BRICKS && ptr.z < MAX_BRICKS);
     return ptr.x | (ptr.y << BITS_PER_AXIS) | (ptr.z << (2*BITS_PER_AXIS));
-    }
+}
 
 glm::uvec3 decode_ptr(uint32_t data) {
     return glm::uvec3(data & (MAX_BRICKS-1), (data >> BITS_PER_AXIS) & (MAX_BRICKS-1), (data >> (2*BITS_PER_AXIS)) & (MAX_BRICKS-1));
@@ -110,17 +110,17 @@ BrickGrid::BrickGrid(const std::shared_ptr<Grid>& grid) : BrickGrid(*grid) {}
 
 BrickGrid::~BrickGrid() {}
 
-float BrickGrid::lookup(const glm::ivec3& ipos) const {
-    const glm::uvec3 brick = ipos >> 3;
+float BrickGrid::lookup(const glm::uvec3& ipos) const {
+    const glm::uvec3 brick = ipos >> 3u;
     const glm::uvec3 ptr = decode_ptr(indirection[brick]);
     const glm::vec2 minmax = decode_range(range[brick]);
-    const glm::uvec3 voxel = ptr * BRICK_SIZE + glm::uvec3(ipos & 7);
+    const glm::uvec3 voxel = (ptr << 3u) + glm::uvec3(ipos & 7u);
     return decode_voxel(atlas[voxel], minmax.x, minmax.y);
 }
 
 std::tuple<float, float> BrickGrid::minorant_majorant() const { return min_maj; }
 
-glm::ivec3 BrickGrid::index_extent() const { return n_bricks * BRICK_SIZE; }
+glm::uvec3 BrickGrid::index_extent() const { return n_bricks * BRICK_SIZE; }
 
 size_t BrickGrid::num_voxels() const { return brick_counter * VOXELS_PER_BRICK; }
 

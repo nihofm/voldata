@@ -30,7 +30,7 @@ public:
     glm::vec4 to_index(const glm::vec4& world) const;               // transform from world- to index-space
 
     // AABB (world-space)
-    std::tuple<glm::vec3, glm::vec3> AABB() const;            // world-space AABB
+    std::tuple<glm::vec3, glm::vec3> AABB() const;                  // world-space AABB
 
     // some parameter convenience functions
     inline void set_albedo(const glm::vec3& albedo) { params.set("albedo", albedo); }

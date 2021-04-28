@@ -34,7 +34,6 @@ public:
         return glm::uvec3(idx % stride.x, (idx / stride.x) % stride.y, idx / (stride.x * stride.y));
     }
 
-protected:
     // data
     glm::uvec3 stride;
     std::vector<T> data;
