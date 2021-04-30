@@ -38,5 +38,5 @@ target_link_libraries(${TARGET} stdc++fs)
 #target_link_libraries(${TARGET} ${Python3_LIBRARIES} pybind11::embed)
 
 # openvdb
-target_link_libraries(${TARGET} openvdb Half tbb)
-#target_link_libraries(${TARGET_PY} PRIVATE openvdb Half tbb)
+target_link_libraries(${TARGET} openvdb tbb)
+#target_link_libraries(${TARGET_PY} PRIVATE openvdb tbb)
