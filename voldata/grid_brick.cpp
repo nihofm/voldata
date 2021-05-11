@@ -11,7 +11,7 @@ namespace voldata {
 // constants
 
 static const uint32_t BRICK_SIZE = 8;
-static const uint32_t BITS_PER_AXIS = 8; // TODO 10/10/10/2 format with 10 bits per axis
+static const uint32_t BITS_PER_AXIS = 8; // TODO 10/10/10/2 format with 10 bits per axis?
 static const uint32_t MAX_BRICKS = 1 << BITS_PER_AXIS;
 static const uint32_t VOXELS_PER_BRICK = BRICK_SIZE * BRICK_SIZE * BRICK_SIZE;
 static const float EPS = 1e-6f;
@@ -73,7 +73,6 @@ BrickGrid::BrickGrid(const Grid& grid) :
                 // store empty brick
                 const glm::uvec3 brick = glm::uvec3(bx, by, bz);
                 indirection[brick] = 0;
-                range[brick] = encode_range(0.f, 0.f);
                 // compute local range over dilated brick
                 float local_min = FLT_MAX, local_max = FLT_MIN;
                 for (int z = -1; z < int(BRICK_SIZE) + 1; ++z) {
@@ -85,6 +84,7 @@ BrickGrid::BrickGrid(const Grid& grid) :
                         }
                     }
                 }
+                range[brick] = encode_range(local_min, local_max);
                 if (std::abs(local_max - local_min) < EPS) continue; // skip empty brick
                 // allocate memory for brick
                 const size_t id = brick_counter.fetch_add(1, std::memory_order_relaxed);
@@ -102,8 +102,7 @@ BrickGrid::BrickGrid(const Grid& grid) :
     });
 
     // prune atlas in z dimension
-    const size_t atlas_slices = BRICK_SIZE * std::round(std::ceil(brick_counter / float(n_bricks.x * n_bricks.y)));
-    atlas.prune(atlas_slices);
+    atlas.prune(BRICK_SIZE * std::round(std::ceil(brick_counter / float(n_bricks.x * n_bricks.y))));
 }
 
 BrickGrid::BrickGrid(const std::shared_ptr<Grid>& grid) : BrickGrid(*grid) {}
