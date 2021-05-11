@@ -91,7 +91,6 @@ BrickGrid::BrickGrid(const Grid& grid) :
                 const glm::uvec3 ptr = indirection.linear_coord(id);
                 // store pointer (offset) and range
                 indirection[brick] = encode_ptr(ptr);
-                range[brick] = encode_range(local_min, local_max);
                 // store brick data
                 for (size_t z = 0; z < BRICK_SIZE; ++z)
                     for (size_t y = 0; y < BRICK_SIZE; ++y)
