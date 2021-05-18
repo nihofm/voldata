@@ -78,7 +78,7 @@ BrickGrid::BrickGrid(const Grid& grid) :
                 for (int z = -1; z < int(BRICK_SIZE) + 1; ++z) {
                     for (int y = -1; y < int(BRICK_SIZE) + 1; ++y) {
                         for (int x = -1; x < int(BRICK_SIZE) + 1; ++x) {
-                            const float value = grid.lookup(brick * BRICK_SIZE + glm::uvec3(x, y, z));
+                            const float value = grid.lookup(glm::uvec3(glm::ivec3(brick * BRICK_SIZE) + glm::ivec3(x, y, z)));
                             local_min = std::min(local_min, value);
                             local_max = std::max(local_max, value);
                         }
