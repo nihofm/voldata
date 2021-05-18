@@ -14,7 +14,6 @@ static const uint32_t BRICK_SIZE = 8;
 static const uint32_t BITS_PER_AXIS = 8; // TODO 10/10/10/2 format with 10 bits per axis?
 static const uint32_t MAX_BRICKS = 1 << BITS_PER_AXIS;
 static const uint32_t VOXELS_PER_BRICK = BRICK_SIZE * BRICK_SIZE * BRICK_SIZE;
-static const float EPS = 1e-6f;
 
 // ----------------------------------------------
 // encoding helpers
@@ -36,13 +35,14 @@ glm::uvec3 decode_ptr(uint32_t data) {
     return glm::uvec3(data & (MAX_BRICKS-1), (data >> BITS_PER_AXIS) & (MAX_BRICKS-1), (data >> (2*BITS_PER_AXIS)) & (MAX_BRICKS-1));
 }
 
-uint8_t encode_voxel(float value, float minorant, float majorant) {
+uint8_t encode_voxel(float value, const glm::vec2& range) {
     assert(value >= minorant && value <= majorant);
-    return uint8_t(std::round(255 * (value - minorant) / (majorant - minorant)));
+    const float value_norm = glm::clamp((value - range.x) / (range.y - range.x), 0.f, 1.f);
+    return uint8_t(std::round(255 * value_norm));
 }
 
-float decode_voxel(uint8_t data, float minorant, float majorant) {
-    return data * (1.f / 255.f) * (majorant - minorant) + minorant;
+float decode_voxel(uint8_t data, const glm::vec2& range) {
+    return range.x + data * (1.f / 255.f) * (range.y - range.x);
 }
 
 inline int div_round_up(int num, int denom) {
@@ -74,7 +74,7 @@ BrickGrid::BrickGrid(const Grid& grid) :
                 const glm::uvec3 brick = glm::uvec3(bx, by, bz);
                 indirection[brick] = 0;
                 // compute local range over dilated brick
-                float local_min = FLT_MAX, local_max = FLT_MIN;
+                float local_min = FLT_MAX, local_max = -FLT_MAX;
                 for (int z = -1; z < int(BRICK_SIZE) + 1; ++z) {
                     for (int y = -1; y < int(BRICK_SIZE) + 1; ++y) {
                         for (int x = -1; x < int(BRICK_SIZE) + 1; ++x) {
@@ -85,7 +85,7 @@ BrickGrid::BrickGrid(const Grid& grid) :
                     }
                 }
                 range[brick] = encode_range(local_min, local_max);
-                if (std::abs(local_max - local_min) < EPS) continue; // skip empty brick
+                if (local_max == local_min) continue;
                 // allocate memory for brick
                 const size_t id = brick_counter.fetch_add(1, std::memory_order_relaxed);
                 const glm::uvec3 ptr = indirection.linear_coord(id);
@@ -95,7 +95,7 @@ BrickGrid::BrickGrid(const Grid& grid) :
                 for (size_t z = 0; z < BRICK_SIZE; ++z)
                     for (size_t y = 0; y < BRICK_SIZE; ++y)
                         for (size_t x = 0; x < BRICK_SIZE; ++x)
-                            atlas[ptr * BRICK_SIZE + glm::uvec3(x, y, z)] = encode_voxel(grid.lookup(brick * BRICK_SIZE + glm::uvec3(x, y, z)), local_min, local_max);
+                            atlas[ptr * BRICK_SIZE + glm::uvec3(x, y, z)] = encode_voxel(grid.lookup(brick * BRICK_SIZE + glm::uvec3(x, y, z)), decode_range(range[brick]));
             }
         }
     });
@@ -113,7 +113,7 @@ float BrickGrid::lookup(const glm::uvec3& ipos) const {
     const glm::uvec3 ptr = decode_ptr(indirection[brick]);
     const glm::vec2 minmax = decode_range(range[brick]);
     const glm::uvec3 voxel = (ptr << 3u) + glm::uvec3(ipos & 7u);
-    return decode_voxel(atlas[voxel], minmax.x, minmax.y);
+    return decode_voxel(atlas[voxel], minmax);
 }
 
 std::tuple<float, float> BrickGrid::minorant_majorant() const { return min_maj; }

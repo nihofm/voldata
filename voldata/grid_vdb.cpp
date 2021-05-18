@@ -80,7 +80,7 @@ std::tuple<float, float> OpenVDBGrid::minorant_majorant() const {
 
 glm::uvec3 OpenVDBGrid::index_extent() const {
     if (num_voxels() == 0) return glm::uvec3(0);
-    return ibb_max - ibb_min;
+    return ibb_max - ibb_min + 1;
 }
 
 size_t OpenVDBGrid::num_voxels() const {
