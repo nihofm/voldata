@@ -3,8 +3,8 @@ set(TARGET voldata)
 #set(TARGET_PY volpy)
 
 # glob source files
-file(GLOB_RECURSE HEADERS "*.h")
-file(GLOB_RECURSE SOURCES "*.cpp")
+file(GLOB HEADERS "*.h")
+file(GLOB SOURCES "*.cpp")
 
 # define targets
 add_library(${TARGET} SHARED ${SOURCES} ${HEADERS})
@@ -40,3 +40,6 @@ target_link_libraries(${TARGET} stdc++fs)
 # openvdb
 target_link_libraries(${TARGET} openvdb tbb)
 #target_link_libraries(${TARGET_PY} PRIVATE openvdb tbb)
+
+# imebra
+target_link_libraries(${TARGET} imebra)
