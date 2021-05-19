@@ -1,22 +1,29 @@
 #include <string>
 #include <memory>
 
+#include "voldata/volume.h"
 #include "voldata/grid_vdb.h"
 #include "voldata/grid_dense.h"
 #include "voldata/grid_brick.h"
+#include "voldata/grid_dicom.h"
 
 int main(int argc, char** argv) {
     std::string path = argc > 1 ? argv[1] : "/home/niko/render-data/volumetric/smoke.vdb";
 
     std::cout << "------------------" << std::endl;
-    std::cout << "VDB grid:" << std::endl;
-    std::shared_ptr<voldata::Grid> grid = std::make_shared<voldata::OpenVDBGrid>(path);
-    std::cout << *grid << std::endl;
+    std::cout << "Volume:" << std::endl;
+    std::shared_ptr<voldata::Volume> volume = std::make_shared<voldata::Volume>(path);
+    std::cout << *volume << std::endl;
 
     std::cout << "------------------" << std::endl;
     std::cout << "Dense grid:" << std::endl;
-    std::shared_ptr<voldata::DenseGrid> dense_grid = std::make_shared<voldata::DenseGrid>(grid);
+    std::shared_ptr<voldata::DenseGrid> dense_grid = std::make_shared<voldata::DenseGrid>(volume->current_grid());
     std::cout << *dense_grid << std::endl;
+
+    std::cout << "------------------" << std::endl;
+    std::cout << "VDB grid:" << std::endl;
+    std::shared_ptr<voldata::Grid> grid = std::make_shared<voldata::OpenVDBGrid>(path);
+    std::cout << *grid << std::endl;
 
     std::cout << "------------------" << std::endl;
     std::cout << "VDB from dense grid:" << std::endl;

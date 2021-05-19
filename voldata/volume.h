@@ -25,12 +25,12 @@ public:
     std::shared_ptr<Grid> current_grid() const;
 
     // transformation
-    glm::mat4 get_transform() const;                                // index- to world-space transformation matrix
-    glm::vec4 to_world(const glm::vec4& index) const;               // transform from index- to world-space
-    glm::vec4 to_index(const glm::vec4& world) const;               // transform from world- to index-space
+    glm::mat4 get_transform() const;                                    // index- to world-space transformation matrix
+    glm::vec4 to_world(const glm::vec4& index) const;                   // transform from index- to world-space
+    glm::vec4 to_index(const glm::vec4& world) const;                   // transform from world- to index-space
 
     // AABB (world-space)
-    std::tuple<glm::vec3, glm::vec3> AABB() const;                  // world-space AABB
+    std::tuple<glm::vec3, glm::vec3> AABB() const;                      // world-space AABB
 
     // some parameter convenience functions
     inline void set_albedo(const glm::vec3& albedo) { params.set("albedo", albedo); }
@@ -42,6 +42,8 @@ public:
     inline void set_density_scale(float density_scale) { params.set("density_scale", density_scale); }
     inline float& get_density_scale() { return params.get<float&>("density_scale"); }
 
+    virtual std::string to_string(const std::string& indent="") const;  // string representation
+
     // data
     glm::mat4 model;
     Dictionary params;
@@ -49,5 +51,7 @@ public:
     // TODO grid slots (density/emission/...)
     std::vector<std::shared_ptr<Grid>> grids;
 };
+
+std::ostream& operator<<(std::ostream& out, const Volume& volume);
 
 }

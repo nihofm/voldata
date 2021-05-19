@@ -1,16 +1,13 @@
 #include "volume.h"
-#include <iostream>
 #include <fstream>
+#include <iostream>
+#include <algorithm>
 #include <glm/gtc/matrix_transform.hpp>
-
-#if defined(WITH_DCMTK)
-#include <dcmtk/dcmdata/dctk.h>
-#include <dcmtk/dcmimgle/dcmimage.h>
-#endif
 
 #include "grid_vdb.h"
 #include "grid_brick.h"
 #include "grid_dense.h"
+#include "grid_dicom.h"
 
 namespace voldata {
 
@@ -36,9 +33,10 @@ void Volume::clear() {
 }
 
 void Volume::load_grid(const fs::path& path) {
-    const fs::path extension = path.extension();
+    std::string extension = path.extension().string();
+    std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
+    // TODO put weird data types in own file (factory)
     if (extension == ".dat") { // handle .dat
-        // TODO put weird data types in own file (factory)
         std::ifstream dat_file(path);
         if (!dat_file.is_open())
             throw std::runtime_error("Unable to read file: " + path.string());
@@ -46,7 +44,7 @@ void Volume::load_grid(const fs::path& path) {
         fs::path raw_path;
         glm::ivec3 dim;
         std::string format;
-        glm::vec3 slice_thickness; // TODO
+        glm::vec3 slice_thickness;
         int bits;
         while (!dat_file.eof()) {
             std::string key;
@@ -82,7 +80,7 @@ void Volume::load_grid(const fs::path& path) {
         std::vector<uint8_t> data(std::istreambuf_iterator<char>(raw_file), {});
         std::cout << "data size bytes: " << data.size() << " / " << dim.x*dim.y*dim.z << std::endl;
         std::shared_ptr<Grid> grid;
-        if (true || format.find("UCHAR"))
+        if (format.find("UCHAR"))
             grid = std::make_shared<DenseGrid>(dim.x, dim.y, dim.z, data.data());
         else if (format.find("FLOAT"))
             grid = std::make_shared<DenseGrid>(dim.x, dim.y, dim.z, (const float*)data.data());
@@ -93,11 +91,23 @@ void Volume::load_grid(const fs::path& path) {
         grids.push_back(grid);
     }
     else if (extension == ".vdb") {
-        // TODO gridname
+        // TODO gridname parameter
         grids.push_back(std::make_shared<OpenVDBGrid>(path, "density"));
     }
+    else if (extension == ".dcm") {
+        // TODO handle dicom files
+        // search directory for other dicom files
+        std::vector<fs::path> dicom_files;
+        for(auto& p : fs::directory_iterator(path.parent_path())) {
+            std::string ext = p.path().extension().string();
+            std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+            if (ext == ".dcm") dicom_files.push_back(p);
+        }
+        std::sort(dicom_files.begin(), dicom_files.end());
+        grids.push_back(std::make_shared<DICOMGrid>(dicom_files));
+    }
     else
-        throw std::runtime_error("Unable to load file extension: " + extension.string());
+        throw std::runtime_error("Unable to load file extension: " + extension);
 }
 
 std::shared_ptr<Grid> Volume::current_grid() const {
@@ -121,5 +131,21 @@ std::tuple<glm::vec3, glm::vec3> Volume::AABB() const {
     const glm::vec3 wbb_max = glm::vec3(to_world(glm::vec4(glm::vec3(current_grid()->index_extent()), 1)));
     return { wbb_min, wbb_max };
 }
+
+std::string Volume::to_string(const std::string& indent) const {
+    std::stringstream out;
+    const auto [bb_min, bb_max] = AABB();
+    out << indent << "AABB: " << glm::to_string(bb_min) << " / " << glm::to_string(bb_max) << std::endl;
+    out << indent << "modelmatrix: " << glm::to_string(model) << std::endl;
+    out << indent << "current grid frame: " << grid_frame << " / " << grids.size() << std::endl;
+    out << indent << "current grid: " << current_grid()->to_string(indent + "  ");
+    //out << indent << "albedo: " << glm::to_string(get_albedo()) << std::endl;;
+    //out << indent << "phase: " << get_phase() << std::endl;
+    //out << indent << "density scale: " << get_density_scale();
+    return out.str();
+
+}
+
+std::ostream& operator<<(std::ostream& out, const Volume& volume) { return out << volume.to_string(); }
 
 }

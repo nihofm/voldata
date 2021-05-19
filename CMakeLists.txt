@@ -24,20 +24,17 @@ add_compile_options(-Wall -Wno-unused-parameter -Wno-unused-variable -Wno-deprec
 # ---------------------------------------------------------------------
 # submodules
 
-#add_subdirectory(submodules/cppgl)
-#add_subdirectory(submodules/pybind11)
+include_directories(submodules)
 
+# openvdb
 set(OPENVDB_BUILD_BINARIES OFF CACHE BOOL "disable openvdb binaries" FORCE)
 #set(OPENVDB_BUILD_PYTHON_MODULE ON CACHE BOOL "enable openvdb python module" FORCE)
 add_subdirectory(submodules/openvdb)
-
-include_directories(submodules)
 include_directories(submodules/openvdb)
 
-# ---------------------------------------------------------------------
-# install shaders
-
-#install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/shader DESTINATION bin)
+# imebra
+add_subdirectory(submodules/imebra)
+include_directories(submodules/imebra/library/include)
 
 # ---------------------------------------------------------------------
 # traverse source tree
