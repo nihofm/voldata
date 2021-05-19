@@ -84,18 +84,20 @@ BrickGrid::BrickGrid(const Grid& grid) :
                         }
                     }
                 }
+                // store range but skip pointer and atlas for empty bricks
                 range[brick] = encode_range(local_min, local_max);
                 if (local_max == local_min) continue;
                 // allocate memory for brick
                 const size_t id = brick_counter.fetch_add(1, std::memory_order_relaxed);
                 const glm::uvec3 ptr = indirection.linear_coord(id);
-                // store pointer (offset) and range
+                // store pointer (offset)
                 indirection[brick] = encode_ptr(ptr);
                 // store brick data
+                const glm::vec2 local_range = decode_range(range[brick]);
                 for (size_t z = 0; z < BRICK_SIZE; ++z)
                     for (size_t y = 0; y < BRICK_SIZE; ++y)
                         for (size_t x = 0; x < BRICK_SIZE; ++x)
-                            atlas[ptr * BRICK_SIZE + glm::uvec3(x, y, z)] = encode_voxel(grid.lookup(brick * BRICK_SIZE + glm::uvec3(x, y, z)), decode_range(range[brick]));
+                            atlas[ptr * BRICK_SIZE + glm::uvec3(x, y, z)] = encode_voxel(grid.lookup(brick * BRICK_SIZE + glm::uvec3(x, y, z)), local_range);
             }
         }
     });
