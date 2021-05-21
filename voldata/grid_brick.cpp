@@ -36,7 +36,7 @@ glm::uvec3 decode_ptr(uint32_t data) {
 }
 
 uint8_t encode_voxel(float value, const glm::vec2& range) {
-    if (value < range.x || value > range.y) std::cout << value << " (" << range.x << ", " << range.y << ")" << std::endl;
+    //if (value < range.x || value > range.y) std::cout << value << " (" << range.x << ", " << range.y << ")" << std::endl;
     assert(value >= range.x && value <= range.y);
     const float value_norm = glm::clamp((value - range.x) / (range.y - range.x), 0.f, 1.f);
     return uint8_t(std::round(255 * value_norm));
@@ -49,6 +49,8 @@ float decode_voxel(uint8_t data, const glm::vec2& range) {
 inline int div_round_up(int num, int denom) {
     return std::round(std::ceil((float)num / denom));
 }
+
+BrickGrid::BrickGrid() : Grid(), n_bricks(0), min_maj({0, 0}), brick_counter(0) {}
 
 BrickGrid::BrickGrid(const Grid& grid) :
     Grid(grid),

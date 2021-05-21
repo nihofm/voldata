@@ -1,8 +1,6 @@
 #include "grid_dicom.h"
 
 #include <numeric>
-//#include <algorithm>
-//#include <execution>
 
 namespace voldata {
 
@@ -49,9 +47,8 @@ DICOMGrid::DICOMGrid(const std::vector<fs::path>& files) :
     max_value(FLT_MIN),
     size_bytes_total(0)
 {
-    // TODO parallelize
     for (size_t i = 0; i < files.size(); ++i) {
-        dicom_datasets.push_back(imebra::CodecFactory::load(files[i].c_str()));//, 2048));
+        dicom_datasets.push_back(imebra::CodecFactory::load(files[i].c_str()));
         dicom_images.push_back(dicom_datasets[i].getImage(0));
 
         imebra::Image image = dicom_images[i];
@@ -61,20 +58,21 @@ DICOMGrid::DICOMGrid(const std::vector<fs::path>& files) :
         n_voxels.y = std::max(n_voxels.y, image.getHeight());
         n_voxels.z += 1;
         
+        std::cout << "dicom image " << i << "/" << files.size() << ": " << image.getWidth() << "x" << image.getHeight() << "x" << image.getChannelsNumber() << "\r" << std::flush;
         //size_t size_bytes;
         //const char* data = reader.data(&size_bytes);
-        std::cout << "image " << i << "/" << files.size() << ": " << image.getWidth() << "x" << image.getHeight() << "x" << image.getChannelsNumber() << std::endl;
-        std::cout << "color space: " << image.getColorSpace() << std::endl;
+        //std::cout << "color space: " << image.getColorSpace() << std::endl;
         //std::cout << "img size bytes: " << size_bytes << std::endl;
-        std::cout << "bytes_per_value: " << reader.getUnitSize() << std::endl;
-        std::cout << "signed: " << (reader.isSigned() ? 1 : 0) << std::endl;
-        std::cout << "float: " << (reader.isFloat() ? 1 : 0) << std::endl;
-        std::cout << "high bit: " << image.getHighBit() << std::endl;
+        //std::cout << "bytes_per_value: " << reader.getUnitSize() << std::endl;
+        //std::cout << "signed: " << (reader.isSigned() ? 1 : 0) << std::endl;
+        //std::cout << "float: " << (reader.isFloat() ? 1 : 0) << std::endl;
+        //std::cout << "high bit: " << image.getHighBit() << std::endl;
 
         min_value = std::min(min_value, dicom_datasets[i].getFloat(imebra::TagId(imebra::tagId_t::SmallestImagePixelValue_0028_0106), 0, min_value));
         max_value = std::max(max_value, dicom_datasets[i].getFloat(imebra::TagId(imebra::tagId_t::LargestImagePixelValue_0028_0107), 0, max_value));
         size_bytes_total += image.getWidth() * image.getHeight() * image.getChannelsNumber() * reader.getUnitSize();
     }
+    std::cout << std::endl;
     // extract transform from DICOM tags
     transform = glm::mat4(1);
 
@@ -94,7 +92,7 @@ DICOMGrid::DICOMGrid(const std::vector<fs::path>& files) :
     transform[3][1] = dicom_datasets[0].getFloat(imebra::TagId(imebra::tagId_t::ImagePositionPatient_0020_0032), 1, 0.f);
     transform[3][2] = dicom_datasets[0].getFloat(imebra::TagId(imebra::tagId_t::ImagePositionPatient_0020_0032), 2, 0.f);
 
-    // TODO rotate to y-up
+    // TODO always rotate to y-up
     transform = glm::rotate(transform, float(1.5 * M_PI), glm::vec3(0, 0, 1));
 
     // TODO extract rescale parameters

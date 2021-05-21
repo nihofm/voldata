@@ -1,13 +1,9 @@
-# target name to generate here
-set(TARGET voldata_print)
-
-# glob source files
-file(GLOB_RECURSE HEADERS "*.h")
-file(GLOB_RECURSE SOURCES "*.cpp")
-
-# compile executable
-add_executable(${TARGET} ${HEADERS} ${SOURCES})
-
-# includes and libraries
+# simple executable to print grid info
+add_executable(voldata_print print.cpp)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/..)
-target_link_libraries(${TARGET} voldata)
+target_link_libraries(voldata_print voldata)
+
+# simple executable to load, convert and store to dense grid
+add_executable(voldata_serialize serialize.cpp)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/..)
+target_link_libraries(voldata_serialize voldata)

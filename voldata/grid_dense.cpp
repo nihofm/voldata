@@ -6,6 +6,8 @@
 
 namespace voldata {
 
+DenseGrid::DenseGrid() : Grid(), n_voxels(0), min_value(0), max_value(0) {}
+
 DenseGrid::DenseGrid(const Grid& grid) :
     Grid(grid),
     n_voxels(grid.index_extent()),

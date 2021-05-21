@@ -1,3 +1,6 @@
 [submodule "submodules/openvdb"]
 	path = submodules/openvdb
 	url = https://github.com/AcademySoftwareFoundation/openvdb
+[submodule "submodules/cereal"]
+	path = submodules/cereal
+	url = https://github.com/USCiLab/cereal

@@ -7,3 +7,4 @@
 #include "grid_vdb.h"
 #include "grid_dicom.h"
 #include "volume.h"
+#include "serialization.h"

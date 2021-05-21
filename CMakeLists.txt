@@ -26,6 +26,9 @@ add_compile_options(-Wall -Wno-unused-parameter -Wno-unused-variable -Wno-deprec
 
 include_directories(submodules)
 
+# cereal
+include_directories(submodules/cereal/include)
+
 # openvdb
 set(OPENVDB_BUILD_BINARIES OFF CACHE BOOL "disable openvdb binaries" FORCE)
 #set(OPENVDB_BUILD_PYTHON_MODULE ON CACHE BOOL "enable openvdb python module" FORCE)

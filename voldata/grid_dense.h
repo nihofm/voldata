@@ -9,6 +9,7 @@ namespace voldata {
 
 class DenseGrid : public Grid {
 public:
+    DenseGrid();
     DenseGrid(const Grid& grid);
     DenseGrid(const std::shared_ptr<Grid>& grid);
     DenseGrid(size_t w, size_t h, size_t d, const uint8_t* data);
@@ -22,7 +23,7 @@ public:
     size_t size_bytes() const;
 
     // data
-    const glm::uvec3 n_voxels;
+    glm::uvec3 n_voxels;
     float min_value, max_value;
     std::vector<uint8_t> voxel_data;
 };

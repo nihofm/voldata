@@ -8,6 +8,7 @@
 #include "grid_brick.h"
 #include "grid_dense.h"
 #include "grid_dicom.h"
+#include "serialization.h"
 
 namespace voldata {
 
@@ -111,6 +112,14 @@ void Volume::load_grid(const fs::path& path) {
             return lhs.string().size() < rhs.string().size() || lhs.string() < rhs.string();
         });
         grids.push_back(std::make_shared<DICOMGrid>(dicom_files));
+    }
+    // handle binary dense grid
+    else if (extension == ".dense") {
+        grids.push_back(load_dense_grid(path));
+    }
+    // handle binary brick grid
+    else if (extension == ".brick") {
+        grids.push_back(load_brick_grid(path));
     }
     else
         throw std::runtime_error("Unable to load file extension: " + extension);
