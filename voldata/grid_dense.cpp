@@ -95,7 +95,7 @@ DenseGrid::DenseGrid(size_t w, size_t h, size_t d, const float* data) :
 DenseGrid::~DenseGrid() {}
 
 float DenseGrid::lookup(const glm::uvec3& ipos) const {
-    if (glm::any(glm::lessThan(ipos, glm::uvec3(0))) || glm::any(glm::greaterThanEqual(ipos, n_voxels))) return 0.f;
+    if (glm::any(glm::greaterThanEqual(ipos, n_voxels))) return 0.f;
     const size_t idx = ipos.z * n_voxels.x * n_voxels.y + ipos.y * n_voxels.x + ipos.x;
     return min_value + (voxel_data[idx] / 255.f) * (max_value - min_value);
 }

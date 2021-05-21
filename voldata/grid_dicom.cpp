@@ -6,6 +6,9 @@
 
 namespace voldata {
 
+// TODO houndsfield range/filtering
+const static int HF_CUTOFF = -750;
+
 void outputDatasetTags(const imebra::DataSet& dataset, const std::wstring& prefix=L"") {
     // Output all the tags
     imebra::tagsIds_t tags = dataset.getTags();
@@ -48,71 +51,90 @@ DICOMGrid::DICOMGrid(const std::vector<fs::path>& files) :
 {
     // TODO parallelize
     for (size_t i = 0; i < files.size(); ++i) {
-        dicom_datasets.push_back(imebra::CodecFactory::load(files[i].c_str(), 2048));
+        dicom_datasets.push_back(imebra::CodecFactory::load(files[i].c_str()));//, 2048));
         dicom_images.push_back(dicom_datasets[i].getImage(0));
 
-        //outputDatasetTags(dicom_datasets[i]);
-
-        n_voxels.x = std::max(n_voxels.x, dicom_images[i].getWidth());
-        n_voxels.y = std::max(n_voxels.y, dicom_images[i].getHeight());
-        n_voxels.z += 1;
-        
         imebra::Image image = dicom_images[i];
         imebra::ReadingDataHandlerNumeric reader(image.getReadingDataHandler());
-        size_t size_bytes;
-        const char* data = reader.data(&size_bytes);
-        const size_t bytes_per_value = reader.getUnitSize();
-        const bool is_signed = reader.isSigned();
-        const bool is_float = reader.isFloat();
-        std::cout << "image: " << image.getWidth() << "x" << image.getHeight() << "x" << image.getChannelsNumber() << std::endl;
+
+        n_voxels.x = std::max(n_voxels.x, image.getWidth());
+        n_voxels.y = std::max(n_voxels.y, image.getHeight());
+        n_voxels.z += 1;
+        
+        //size_t size_bytes;
+        //const char* data = reader.data(&size_bytes);
+        std::cout << "image " << i << "/" << files.size() << ": " << image.getWidth() << "x" << image.getHeight() << "x" << image.getChannelsNumber() << std::endl;
         std::cout << "color space: " << image.getColorSpace() << std::endl;
-        std::cout << "img size bytes: " << size_bytes << std::endl;
-        std::cout << "bytes_per_value: " << bytes_per_value << std::endl;
-        std::cout << "signed: " << (is_signed ? 1 : 0) << std::endl;
-        std::cout << "float: " << (is_float ? 1 : 0) << std::endl;
+        //std::cout << "img size bytes: " << size_bytes << std::endl;
+        std::cout << "bytes_per_value: " << reader.getUnitSize() << std::endl;
+        std::cout << "signed: " << (reader.isSigned() ? 1 : 0) << std::endl;
+        std::cout << "float: " << (reader.isFloat() ? 1 : 0) << std::endl;
         std::cout << "high bit: " << image.getHighBit() << std::endl;
-        for (size_t y = 0; y < image.getHeight(); ++y) {
-            for (size_t x = 0; x < image.getWidth(); ++x) {
-                const float value = reader.getFloat((y * image.getWidth() + x) * image.getChannelsNumber());
-                min_value = std::min(min_value, value);
-                max_value = std::max(max_value, value);
-            }
-        }
+
+        min_value = std::min(min_value, dicom_datasets[i].getFloat(imebra::TagId(imebra::tagId_t::SmallestImagePixelValue_0028_0106), 0, min_value));
+        max_value = std::max(max_value, dicom_datasets[i].getFloat(imebra::TagId(imebra::tagId_t::LargestImagePixelValue_0028_0107), 0, max_value));
         size_bytes_total += image.getWidth() * image.getHeight() * image.getChannelsNumber() * reader.getUnitSize();
     }
-    // TODO extract transform from DICOM tags
+    // extract transform from DICOM tags
     transform = glm::mat4(1);
 
-    /*
-    std::vector<uint32_t> slices(n_voxels.z);
-    std::iota(slices.begin(), slices.end(), 0);
-    // encode dense grid data with 8bit per voxel
-    voxel_data.resize(n_voxels.x * n_voxels.y * n_voxels.z);
-    std::for_each(std::execution::par_unseq, slices.begin(), slices.end(),
-    [&](uint32_t z)
-    {
-        for (uint32_t y = 0; y < n_voxels.y; ++y)
-            for (uint32_t x = 0; x < n_voxels.x; ++x) {
-                const float value = grid.lookup(glm::ivec3(x, y, z));
-                const size_t idx = z * n_voxels.x * n_voxels.y + y * n_voxels.x + x;
-                voxel_data[idx] = uint8_t(std::round(255 * (value - min_value) / (max_value - min_value)));
-            }
-    });
-    */
+    const float psx = dicom_datasets[0].getFloat(imebra::TagId(imebra::tagId_t::PixelSpacing_0028_0030), 0, 1.f);
+    transform[0][0] = psx * dicom_datasets[0].getFloat(imebra::TagId(imebra::tagId_t::ImageOrientationPatient_0020_0037), 0, 1.f);
+    transform[0][1] = psx * dicom_datasets[0].getFloat(imebra::TagId(imebra::tagId_t::ImageOrientationPatient_0020_0037), 1, 0.f);
+    transform[0][2] = psx * dicom_datasets[0].getFloat(imebra::TagId(imebra::tagId_t::ImageOrientationPatient_0020_0037), 2, 0.f);
+
+    const float psy = dicom_datasets[0].getFloat(imebra::TagId(imebra::tagId_t::PixelSpacing_0028_0030), 1, 1.f);
+    transform[1][0] = psy * dicom_datasets[0].getFloat(imebra::TagId(imebra::tagId_t::ImageOrientationPatient_0020_0037), 3, 0.f);
+    transform[1][1] = psy * dicom_datasets[0].getFloat(imebra::TagId(imebra::tagId_t::ImageOrientationPatient_0020_0037), 4, 1.f);
+    transform[1][2] = psy * dicom_datasets[0].getFloat(imebra::TagId(imebra::tagId_t::ImageOrientationPatient_0020_0037), 5, 0.f);
+
+    transform[2][2] = dicom_datasets[0].getFloat(imebra::TagId(imebra::tagId_t::SliceThickness_0018_0050), 0, 1.f) * std::max(psx, psy);
+
+    transform[3][0] = dicom_datasets[0].getFloat(imebra::TagId(imebra::tagId_t::ImagePositionPatient_0020_0032), 0, 0.f);
+    transform[3][1] = dicom_datasets[0].getFloat(imebra::TagId(imebra::tagId_t::ImagePositionPatient_0020_0032), 1, 0.f);
+    transform[3][2] = dicom_datasets[0].getFloat(imebra::TagId(imebra::tagId_t::ImagePositionPatient_0020_0032), 2, 0.f);
+
+    // TODO rotate to y-up
+    transform = glm::rotate(transform, float(1.5 * M_PI), glm::vec3(0, 0, 1));
+
+    // TODO extract rescale parameters
+    rescale_slope = dicom_datasets[0].getFloat(imebra::TagId(imebra::tagId_t::RescaleSlope_0028_1053), 0, 1.f);
+    rescale_intercept = dicom_datasets[0].getFloat(imebra::TagId(imebra::tagId_t::RescaleIntercept_0028_1052), 0, 0.f);
+    //min_value = rescale_slope * min_value + rescale_intercept;
+    //max_value = rescale_slope * max_value + rescale_intercept;
+
+    outputDatasetTags(dicom_datasets[0]);
+
+    //std::cout << "pixel spacing 0: " << dicom_datasets[0].getFloat(imebra::TagId(imebra::tagId_t::PixelSpacing_0028_0030), 0, 1.f) << std::endl;
+    //std::cout << "pixel spacing 1: " << dicom_datasets[0].getFloat(imebra::TagId(imebra::tagId_t::PixelSpacing_0028_0030), 1, 1.f) << std::endl;
+    //std::cout << "slice thickness 0: " << dicom_datasets[0].getFloat(imebra::TagId(imebra::tagId_t::SliceThickness_0018_0050), 0, 1.f) << std::endl;
+    //std::cout << "slice thickness 0: " << dicom_datasets[0].getFloat(imebra::TagId(24, 80), 0, 1.f) << std::endl;
+    //std::cout << "min value 0: " << dicom_datasets[0].getFloat(imebra::TagId(imebra::tagId_t::SmallestImagePixelValue_0028_0106), 0, 0.f) << std::endl;
+    //std::cout << "max value 0: " << dicom_datasets[0].getFloat(imebra::TagId(imebra::tagId_t::LargestImagePixelValue_0028_0107), 0, 1.f) << std::endl;
+    //std::cout << "resc slope 0: " << dicom_datasets[0].getFloat(imebra::TagId(imebra::tagId_t::RescaleSlope_0028_1053), 0, 1.f) << std::endl;
+    //std::cout << "resc interc 0: " << dicom_datasets[0].getFloat(imebra::TagId(imebra::tagId_t::RescaleIntercept_0028_1052), 0, 0.f) << std::endl;
+
 }
 
-DICOMGrid::~DICOMGrid() {}
+DICOMGrid::~DICOMGrid() {
+    // TODO segfault on deconstruct (double free?)
+    dicom_images.clear();
+    dicom_datasets.clear();
+}
 
 float DICOMGrid::lookup(const glm::uvec3& ipos) const {
     if (ipos.z >= dicom_images.size()) return 0.f;
     const imebra::Image image = dicom_images[ipos.z];
     if (ipos.x >= image.getWidth() || ipos.y >= image.getHeight()) return 0.f;
-    // TODO test
     imebra::ReadingDataHandlerNumeric reader(image.getReadingDataHandler());
-    return reader.getFloat((ipos.y * image.getWidth() + ipos.x) * image.getChannelsNumber());
+    const float value_raw = reader.getFloat((ipos.y * image.getWidth() + ipos.x) * image.getChannelsNumber());
+    //return rescale_slope * value_raw + rescale_intercept; // return houndsfield units
+    return glm::clamp(reader.getFloat((ipos.y * image.getWidth() + ipos.x) * image.getChannelsNumber()) / max_value, 0.f, 1.f); // XXX
+    return reader.getFloat((ipos.y * image.getWidth() + ipos.x) * image.getChannelsNumber()) / max_value; // XXX
 }
 
-std::tuple<float, float> DICOMGrid::minorant_majorant() const { return { min_value, max_value }; }
+//std::tuple<float, float> DICOMGrid::minorant_majorant() const { return { min_value, max_value }; }
+std::tuple<float, float> DICOMGrid::minorant_majorant() const { return { 0.f, 1.f }; }
 
 glm::uvec3 DICOMGrid::index_extent() const { return n_voxels; }
 

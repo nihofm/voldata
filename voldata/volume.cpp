@@ -32,11 +32,12 @@ void Volume::clear() {
     grids.clear();
 }
 
+// TODO put weird data types in own file (factory)
 void Volume::load_grid(const fs::path& path) {
     std::string extension = path.extension().string();
     std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
-    // TODO put weird data types in own file (factory)
-    if (extension == ".dat") { // handle .dat
+    // handle .dat files (Siemens renderer)
+    if (extension == ".dat") {
         std::ifstream dat_file(path);
         if (!dat_file.is_open())
             throw std::runtime_error("Unable to read file: " + path.string());
@@ -80,9 +81,10 @@ void Volume::load_grid(const fs::path& path) {
         std::vector<uint8_t> data(std::istreambuf_iterator<char>(raw_file), {});
         std::cout << "data size bytes: " << data.size() << " / " << dim.x*dim.y*dim.z << std::endl;
         std::shared_ptr<Grid> grid;
-        if (format.find("UCHAR"))
+        if (format == "UCHAR")
             grid = std::make_shared<DenseGrid>(dim.x, dim.y, dim.z, data.data());
-        else if (format.find("FLOAT"))
+        // TODO USHORT
+        else if (format == "FLOAT")
             grid = std::make_shared<DenseGrid>(dim.x, dim.y, dim.z, (const float*)data.data());
         else
             throw std::runtime_error("Unsupported data format for .dat file: " + format);
@@ -90,12 +92,13 @@ void Volume::load_grid(const fs::path& path) {
         grid->transform = glm::scale(glm::rotate(glm::mat4(1), float(1.5 * M_PI), glm::vec3(1, 0, 0)), slice_thickness);
         grids.push_back(grid);
     }
+    // handle OpenVDB files
     else if (extension == ".vdb") {
         // TODO gridname parameter
         grids.push_back(std::make_shared<OpenVDBGrid>(path, "density"));
     }
+    // handle dicom files
     else if (extension == ".dcm") {
-        // TODO handle dicom files
         // search directory for other dicom files
         std::vector<fs::path> dicom_files;
         for(auto& p : fs::directory_iterator(path.parent_path())) {
@@ -103,7 +106,10 @@ void Volume::load_grid(const fs::path& path) {
             std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
             if (ext == ".dcm") dicom_files.push_back(p);
         }
-        std::sort(dicom_files.begin(), dicom_files.end());
+        // lexographic sort
+        std::sort(dicom_files.begin(), dicom_files.end(), [](const fs::path& lhs, const fs::path& rhs) {
+            return lhs.string().size() < rhs.string().size() || lhs.string() < rhs.string();
+        });
         grids.push_back(std::make_shared<DICOMGrid>(dicom_files));
     }
     else

@@ -24,6 +24,7 @@ public:
     // data
     glm::uvec3 n_voxels;
     float min_value, max_value;
+    float rescale_slope, rescale_intercept;
     size_t size_bytes_total;
     std::vector<imebra::DataSet> dicom_datasets;
     std::vector<imebra::Image> dicom_images;
