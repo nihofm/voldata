@@ -11,24 +11,25 @@ namespace voldata {
 // constants
 
 static const uint32_t BRICK_SIZE = 8;
-static const uint32_t BITS_PER_AXIS = 8; // TODO 10/10/10/2 format with 10 bits per axis?
+static const uint32_t BITS_PER_AXIS = 8; // TODO 10/10/10/2 layout
 static const uint32_t MAX_BRICKS = 1 << BITS_PER_AXIS;
 static const uint32_t VOXELS_PER_BRICK = BRICK_SIZE * BRICK_SIZE * BRICK_SIZE;
+static const uint32_t NUM_MIPMAPS = 3;
 
 // ----------------------------------------------
 // encoding helpers
 
 uint32_t encode_range(float x, float y) {
-    return uint32_t(glm::detail::toFloat16(x)) | uint32_t(glm::detail::toFloat16(y)) << 16;
+    return uint32_t(glm::detail::toFloat16(x)) | (uint32_t(glm::detail::toFloat16(y)) << 16);
 }
 
 glm::vec2 decode_range(uint32_t data) {
-    return glm::vec2(glm::detail::toFloat32(data & 0xFFFF), glm::detail::toFloat32(data >> 16));
+    return glm::vec2(glm::detail::toFloat32(data & 0xFFFFu), glm::detail::toFloat32(data >> 16));
 }
 
 uint32_t encode_ptr(const glm::uvec3& ptr) {
     assert(ptr.x < MAX_BRICKS && ptr.y < MAX_BRICKS && ptr.z < MAX_BRICKS);
-    return ptr.x | (ptr.y << BITS_PER_AXIS) | (ptr.z << (2*BITS_PER_AXIS));
+    return glm::clamp(ptr.x, 0u, MAX_BRICKS-1) | (glm::clamp(ptr.y, 0u, MAX_BRICKS-1) << BITS_PER_AXIS) | (glm::clamp(ptr.z, 0u, MAX_BRICKS-1) << (2*BITS_PER_AXIS));
 }
 
 glm::uvec3 decode_ptr(uint32_t data) {
@@ -36,7 +37,6 @@ glm::uvec3 decode_ptr(uint32_t data) {
 }
 
 uint8_t encode_voxel(float value, const glm::vec2& range) {
-    //if (value < range.x || value > range.y) std::cout << value << " (" << range.x << ", " << range.y << ")" << std::endl;
     assert(value >= range.x && value <= range.y);
     const float value_norm = glm::clamp((value - range.x) / (range.y - range.x), 0.f, 1.f);
     return uint8_t(std::round(255 * value_norm));
@@ -107,6 +107,37 @@ BrickGrid::BrickGrid(const Grid& grid) :
 
     // prune atlas in z dimension
     atlas.prune(BRICK_SIZE * std::round(std::ceil(brick_counter / float(n_bricks.x * n_bricks.y))));
+
+    // generate min/max mipmaps of range texture
+    // TODO test/debug
+    // TODO parallelize
+    range_mipmaps.resize(NUM_MIPMAPS);
+    for (uint32_t i = 0; i < NUM_MIPMAPS; ++i) {
+        const glm::uvec3 target_size = glm::uvec3(glm::ceil(glm::vec3(n_bricks) * glm::vec3(1.f / std::pow(2, i+1))));
+        range_mipmaps[i].resize(target_size);
+        auto& source = i == 0 ? range : range_mipmaps[i - 1];
+        auto& target = range_mipmaps[i];
+        for (size_t bz = 0; bz < target_size.z; ++bz) {
+            for (size_t by = 0; by < target_size.y; ++by) {
+                for (size_t bx = 0; bx < target_size.x; ++bx) {
+                    const glm::uvec3 target_at = glm::uvec3(bx, by, bz);
+                    float range_min = FLT_MAX, range_max = -FLT_MAX;
+                    for (int z = 0; z < 2; ++z) {
+                        for (int y = 0; y < 2; ++y) {
+                            for (int x = 0; x < 2; ++x) {
+                                const glm::uvec3 source_at = 2u * target_at + glm::uvec3(x, y, z);
+                                if (glm::any(glm::greaterThanEqual(source_at, source.stride))) continue;
+                                const glm::vec2 curr = decode_range(source[source_at]);
+                                range_min = std::min(range_min, curr.x);
+                                range_max = std::max(range_max, curr.y);
+                            }
+                        }
+                    }
+                    target[target_at] = encode_range(range_min, range_max);
+                }
+            }
+        }
+    }
 }
 
 BrickGrid::BrickGrid(const std::shared_ptr<Grid>& grid) : BrickGrid(*grid) {}
