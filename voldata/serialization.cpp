@@ -42,7 +42,7 @@ namespace voldata {
 
     // brick grid
     template <class Archive> void serialize(Archive& archive, BrickGrid& grid) {
-        archive(grid.transform, grid.n_bricks, grid.min_maj, grid.brick_counter, grid.indirection, grid.range, grid.atlas);
+        archive(grid.transform, grid.n_bricks, grid.min_maj, grid.brick_counter, grid.indirection, grid.range, grid.atlas, grid.range_mipmaps);
     }
 
     // general write func

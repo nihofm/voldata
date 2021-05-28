@@ -109,31 +109,33 @@ BrickGrid::BrickGrid(const Grid& grid) :
     atlas.prune(BRICK_SIZE * std::round(std::ceil(brick_counter / float(n_bricks.x * n_bricks.y))));
 
     // generate min/max mipmaps of range texture
-    // TODO test/debug
     // TODO parallelize
     range_mipmaps.resize(NUM_MIPMAPS);
     for (uint32_t i = 0; i < NUM_MIPMAPS; ++i) {
-        const glm::uvec3 target_size = glm::uvec3(glm::ceil(glm::vec3(n_bricks) * glm::vec3(1.f / std::pow(2, i+1))));
-        range_mipmaps[i].resize(target_size);
+        const glm::uvec3 mip_size = glm::uvec3(n_bricks / (1u << (i + 1u)));
+        range_mipmaps[i].resize(mip_size);
         auto& source = i == 0 ? range : range_mipmaps[i - 1];
-        auto& target = range_mipmaps[i];
-        for (size_t bz = 0; bz < target_size.z; ++bz) {
-            for (size_t by = 0; by < target_size.y; ++by) {
-                for (size_t bx = 0; bx < target_size.x; ++bx) {
-                    const glm::uvec3 target_at = glm::uvec3(bx, by, bz);
+        for (size_t bz = 0; bz < mip_size.z; ++bz) {
+            for (size_t by = 0; by < mip_size.y; ++by) {
+                for (size_t bx = 0; bx < mip_size.x; ++bx) {
+                    const glm::uvec3 brick = glm::uvec3(bx, by, bz);
                     float range_min = FLT_MAX, range_max = -FLT_MAX;
-                    for (int z = 0; z < 2; ++z) {
-                        for (int y = 0; y < 2; ++y) {
-                            for (int x = 0; x < 2; ++x) {
-                                const glm::uvec3 source_at = 2u * target_at + glm::uvec3(x, y, z);
-                                if (glm::any(glm::greaterThanEqual(source_at, source.stride))) continue;
+                    // TODO handle edge case truncation due to floor convention :(
+                    const glm::uvec3 filter_size = glm::uvec3(
+                            2 + (bx == mip_size.x - 1 && source.stride.x % 2 == 1 ? 1 : 0),
+                            2 + (by == mip_size.y - 1 && source.stride.y % 2 == 1 ? 1 : 0),
+                            2 + (bz == mip_size.z - 1 && source.stride.z % 2 == 1 ? 1 : 0));
+                    for (uint32_t z = 0; z < filter_size.z; ++z) {
+                        for (uint32_t y = 0; y < filter_size.y; ++y) {
+                            for (uint32_t x = 0; x < filter_size.x; ++x) {
+                                const glm::uvec3 source_at = 2u * brick + glm::uvec3(x, y, z);
                                 const glm::vec2 curr = decode_range(source[source_at]);
                                 range_min = std::min(range_min, curr.x);
                                 range_max = std::max(range_max, curr.y);
                             }
                         }
                     }
-                    target[target_at] = encode_range(range_min, range_max);
+                    range_mipmaps[i][brick] = encode_range(range_min, range_max);
                 }
             }
         }
@@ -163,7 +165,10 @@ size_t BrickGrid::size_bytes() const {
     const size_t size_indirection = sizeof(uint32_t) * dense_bricks;
     const size_t size_range = sizeof(uint32_t) * dense_bricks;
     const size_t size_atlas = sizeof(uint8_t) * brick_counter * VOXELS_PER_BRICK;
-    return size_indirection + size_range + size_atlas;
+    size_t size_mipmaps = 0;
+    for (const auto& mip : range_mipmaps)
+        size_mipmaps += sizeof(uint32_t) * mip.stride.x * mip.stride.y * mip.stride.z;
+    return size_indirection + size_range + size_atlas + size_mipmaps;
 }
 
 std::string BrickGrid::to_string(const std::string& indent) const {
