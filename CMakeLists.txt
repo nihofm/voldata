@@ -1,4 +1,4 @@
-project(voldata LANGUAGES C CXX)# CUDA)
+project(voldata LANGUAGES C CXX)
 cmake_minimum_required(VERSION 3.10)
 
 # ---------------------------------------------------------------------
@@ -31,7 +31,7 @@ include_directories(submodules/cereal/include)
 
 # openvdb
 set(OPENVDB_BUILD_BINARIES OFF CACHE BOOL "disable openvdb binaries" FORCE)
-#set(OPENVDB_BUILD_PYTHON_MODULE ON CACHE BOOL "enable openvdb python module" FORCE)
+set(OPENVDB_BUILD_PYTHON_MODULE OFF CACHE BOOL "enable openvdb python module" FORCE)
 add_subdirectory(submodules/openvdb)
 include_directories(submodules/openvdb)
 
@@ -42,5 +42,5 @@ include_directories(submodules/imebra/library/include)
 # ---------------------------------------------------------------------
 # traverse source tree
 
-add_subdirectory(voldata)
+add_subdirectory(src)
 add_subdirectory(tools)

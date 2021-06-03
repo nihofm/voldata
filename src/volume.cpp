@@ -33,7 +33,7 @@ void Volume::clear() {
     grids.clear();
 }
 
-// TODO put weird data types in own file (factory)
+// TODO put weird data types in own file (factory)?
 void Volume::load_grid(const fs::path& path) {
     std::string extension = path.extension().string();
     std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
@@ -84,7 +84,7 @@ void Volume::load_grid(const fs::path& path) {
         std::shared_ptr<Grid> grid;
         if (format == "UCHAR")
             grid = std::make_shared<DenseGrid>(dim.x, dim.y, dim.z, data.data());
-        // TODO USHORT
+        // TODO handle USHORT
         else if (format == "FLOAT")
             grid = std::make_shared<DenseGrid>(dim.x, dim.y, dim.z, (const float*)data.data());
         else
@@ -126,7 +126,7 @@ void Volume::load_grid(const fs::path& path) {
 }
 
 std::shared_ptr<Grid> Volume::current_grid() const {
-    return grids[grid_frame];
+    return grids.at(grid_frame);
 }
 
 glm::mat4 Volume::get_transform() const {

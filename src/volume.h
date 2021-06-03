@@ -13,7 +13,6 @@ namespace voldata {
 class Volume {
 public:
     Volume();
-    // TODO volme/grid factory
     Volume(const fs::path& path);
     Volume(size_t w, size_t h, size_t d, const uint8_t* data);
     Volume(size_t w, size_t h, size_t d, const float* data);

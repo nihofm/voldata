@@ -1,7 +1,7 @@
 #include <string>
 #include <memory>
 
-#include "voldata/voldata.h"
+#include "voldata.h"
 
 int main(int argc, char** argv) {
     std::string path = argc > 1 ? argv[1] : "/home/niko/render-data/volumetric/smoke.vdb";

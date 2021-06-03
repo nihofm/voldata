@@ -3,7 +3,7 @@
 #include <filesystem>
 namespace fs = std::filesystem;
 
-#include "voldata/voldata.h"
+#include "voldata.h"
 
 int main(int argc, char** argv) {
     fs::path path = argc > 1 ? argv[1] : "/home/niko/render-data/volumetric/smoke.vdb";
