@@ -2,6 +2,8 @@
 #include <fstream>
 #include <iostream>
 #include <algorithm>
+#include <filesystem>
+namespace fs = std::filesystem;
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "grid_vdb.h"
@@ -12,10 +14,10 @@
 
 namespace voldata {
 
-Volume::Volume() : model(glm::mat4(1)), grid_frame(0) {}
+Volume::Volume() : model(glm::mat4(1)), albedo(.5f), phase(.5f), density_scale(1.f), grid_frame(0) {}
 
-Volume::Volume(const fs::path& path) : Volume() {
-    load_grid(path);
+Volume::Volume(const std::string& filepath) : Volume() {
+    load_grid(filepath);
 }
 
 Volume::Volume(size_t w, size_t h, size_t d, const uint8_t* data) : Volume() {
@@ -29,12 +31,12 @@ Volume::Volume(size_t w, size_t h, size_t d, const float* data) : Volume() {
 Volume::~Volume() {}
 
 void Volume::clear() {
-    params.clear();
     grids.clear();
 }
 
 // TODO put weird data types in own file (factory)?
-void Volume::load_grid(const fs::path& path) {
+void Volume::load_grid(const std::string& filepath) {
+    fs::path path = filepath;
     std::string extension = path.extension().string();
     std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
     // handle .dat files (Siemens renderer)
@@ -130,6 +132,7 @@ std::shared_ptr<Grid> Volume::current_grid() const {
 }
 
 glm::mat4 Volume::get_transform() const {
+    if (grids.size() <= grid_frame) return model;
     return model * current_grid()->transform;
 }
 
@@ -142,9 +145,15 @@ glm::vec4 Volume::to_index(const glm::vec4& world) const {
 }
 
 std::tuple<glm::vec3, glm::vec3> Volume::AABB() const {
+    if (grids.size() <= grid_frame) return { glm::vec4(0), glm::vec4(0) };
     const glm::vec3 wbb_min = glm::vec3(to_world(glm::vec4(0, 0, 0, 1)));
     const glm::vec3 wbb_max = glm::vec3(to_world(glm::vec4(glm::vec3(current_grid()->index_extent()), 1)));
     return { wbb_min, wbb_max };
+}
+
+std::tuple<float, float> Volume::minorant_majorant() const {
+    if (grids.size() <= grid_frame) return { 0.f, 0.f };
+    return current_grid()->minorant_majorant();
 }
 
 std::string Volume::to_string(const std::string& indent) const {
@@ -153,10 +162,10 @@ std::string Volume::to_string(const std::string& indent) const {
     out << indent << "AABB: " << glm::to_string(bb_min) << " / " << glm::to_string(bb_max) << std::endl;
     out << indent << "modelmatrix: " << glm::to_string(model) << std::endl;
     out << indent << "current grid frame: " << grid_frame << " / " << grids.size() << std::endl;
-    out << indent << "current grid: " << current_grid()->to_string(indent + "  ");
-    //out << indent << "albedo: " << glm::to_string(get_albedo()) << std::endl;;
-    //out << indent << "phase: " << get_phase() << std::endl;
-    //out << indent << "density scale: " << get_density_scale();
+    out << indent << "current grid: " << current_grid()->to_string(indent + "  ") << std::endl;
+    out << indent << "albedo: " << glm::to_string(albedo) << std::endl;
+    out << indent << "phase: " << phase << std::endl;
+    out << indent << "density scale: " << density_scale;
     return out.str();
 
 }
