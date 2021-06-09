@@ -46,15 +46,15 @@ float decode_voxel(uint8_t data, const glm::vec2& range) {
     return range.x + data * (1.f / 255.f) * (range.y - range.x);
 }
 
-inline int div_round_up(int num, int denom) {
-    return std::round(std::ceil((float)num / denom));
+inline glm::uvec3 div_round_up(const glm::uvec3& num, const glm::uvec3& denom) {
+    return glm::ceil(glm::vec3(num) / glm::vec3(denom));
 }
 
 BrickGrid::BrickGrid() : Grid(), n_bricks(0), min_maj({0, 0}), brick_counter(0) {}
 
 BrickGrid::BrickGrid(const Grid& grid) :
     Grid(grid),
-    n_bricks(glm::ceil(glm::vec3(grid.index_extent()) / float(BRICK_SIZE))),
+    n_bricks(div_round_up(div_round_up(grid.index_extent(), glm::uvec3(BRICK_SIZE)), glm::uvec3(1u << NUM_MIPMAPS)) * 1u << NUM_MIPMAPS),
     min_maj(grid.minorant_majorant())
 {
     // allocate buffers
@@ -68,9 +68,7 @@ BrickGrid::BrickGrid(const Grid& grid) :
     brick_counter = 0;
     std::vector<int> slices(n_bricks.z);
     std::iota(slices.begin(), slices.end(), 0);
-    std::for_each(std::execution::par_unseq, slices.begin(), slices.end(),
-    [&](int bz)
-    {
+    std::for_each(std::execution::par_unseq, slices.begin(), slices.end(), [&](int bz) {
         for (size_t by = 0; by < n_bricks.y; ++by) {
             for (size_t bx = 0; bx < n_bricks.x; ++bx) {
                 // store empty brick
@@ -109,25 +107,21 @@ BrickGrid::BrickGrid(const Grid& grid) :
     atlas.prune(BRICK_SIZE * std::round(std::ceil(brick_counter / float(n_bricks.x * n_bricks.y))));
 
     // generate min/max mipmaps of range texture
-    // TODO parallelize
     range_mipmaps.resize(NUM_MIPMAPS);
     for (uint32_t i = 0; i < NUM_MIPMAPS; ++i) {
         const glm::uvec3 mip_size = glm::uvec3(n_bricks / (1u << (i + 1u)));
         range_mipmaps[i].resize(mip_size);
         auto& source = i == 0 ? range : range_mipmaps[i - 1];
-        for (size_t bz = 0; bz < mip_size.z; ++bz) {
+        slices.resize(mip_size.z);
+        std::iota(slices.begin(), slices.end(), 0);
+        std::for_each(std::execution::par_unseq, slices.begin(), slices.end(), [&](int bz) {
             for (size_t by = 0; by < mip_size.y; ++by) {
                 for (size_t bx = 0; bx < mip_size.x; ++bx) {
                     const glm::uvec3 brick = glm::uvec3(bx, by, bz);
                     float range_min = FLT_MAX, range_max = -FLT_MAX;
-                    // TODO handle edge case truncation due to floor convention :(
-                    const glm::uvec3 filter_size = glm::uvec3(
-                            2 + (bx == mip_size.x - 1 && source.stride.x % 2 == 1 ? 1 : 0),
-                            2 + (by == mip_size.y - 1 && source.stride.y % 2 == 1 ? 1 : 0),
-                            2 + (bz == mip_size.z - 1 && source.stride.z % 2 == 1 ? 1 : 0));
-                    for (uint32_t z = 0; z < filter_size.z; ++z) {
-                        for (uint32_t y = 0; y < filter_size.y; ++y) {
-                            for (uint32_t x = 0; x < filter_size.x; ++x) {
+                    for (uint32_t z = 0; z < 2; ++z) {
+                        for (uint32_t y = 0; y < 2; ++y) {
+                            for (uint32_t x = 0; x < 2; ++x) {
                                 const glm::uvec3 source_at = 2u * brick + glm::uvec3(x, y, z);
                                 const glm::vec2 curr = decode_range(source[source_at]);
                                 range_min = std::min(range_min, curr.x);
@@ -138,7 +132,7 @@ BrickGrid::BrickGrid(const Grid& grid) :
                     range_mipmaps[i][brick] = encode_range(range_min, range_max);
                 }
             }
-        }
+        });
     }
 }
 
