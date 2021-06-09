@@ -11,7 +11,7 @@ namespace voldata {
 // constants
 
 static const uint32_t BRICK_SIZE = 8;
-static const uint32_t BITS_PER_AXIS = 8; // TODO 10/10/10/2 layout
+static const uint32_t BITS_PER_AXIS = 10;
 static const uint32_t MAX_BRICKS = 1 << BITS_PER_AXIS;
 static const uint32_t VOXELS_PER_BRICK = BRICK_SIZE * BRICK_SIZE * BRICK_SIZE;
 static const uint32_t NUM_MIPMAPS = 3;
