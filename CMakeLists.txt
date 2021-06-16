@@ -18,13 +18,18 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_compile_options(-pthread -fopenmp -march=native)
+add_compile_options(-pthread -march=native)
 add_compile_options(-Wall -Wno-unused-parameter -Wno-unused-variable -Wno-deprecated-declarations)
 
 # ---------------------------------------------------------------------
 # submodules
 
 include_directories(submodules)
+
+# tbb
+set(TBB_BUILD_TESTS OFF CACHE BOOL "disable building TBB tests" FORCE)
+include_directories(submodules/tbb/include)
+add_subdirectory(submodules/tbb)
 
 # cereal
 include_directories(submodules/cereal/include)
