@@ -16,7 +16,7 @@ add_library(${TARGET} SHARED ${SOURCES} ${HEADERS})
 #set_target_properties(${TARGET_PY} PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}")
 
 # install
-install(TARGETS ${TARGET} DESTINATION bin)
+install(TARGETS ${TARGET} DESTINATION lib)
 install(DIRECTORY . DESTINATION include/${TARGET} FILES_MATCHING PATTERN "*.h")
 
 # ----------------------------------------------------------
