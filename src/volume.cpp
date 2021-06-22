@@ -131,6 +131,24 @@ std::shared_ptr<Grid> Volume::current_grid() const {
     return grids.at(grid_frame);
 }
 
+std::shared_ptr<DenseGrid> Volume::current_grid_dense() const {
+    auto dense = std::dynamic_pointer_cast<DenseGrid>(current_grid()); // check type
+    if (!dense) dense = std::make_shared<DenseGrid>(current_grid()); // type not matching, convert grid
+    return dense;
+}
+
+std::shared_ptr<BrickGrid> Volume::current_grid_brick() const {
+    auto brick = std::dynamic_pointer_cast<BrickGrid>(current_grid()); // check type
+    if (!brick) brick = std::make_shared<BrickGrid>(current_grid()); // type not matching, convert grid
+    return brick;
+}
+
+std::shared_ptr<OpenVDBGrid> Volume::current_grid_vdb() const {
+    auto vdb = std::dynamic_pointer_cast<OpenVDBGrid>(current_grid()); // check type
+    if (!vdb) vdb = std::make_shared<OpenVDBGrid>(current_grid()); // type not matching, convert grid
+    return vdb;
+}
+
 glm::mat4 Volume::get_transform() const {
     if (grids.size() <= grid_frame) return model;
     return model * current_grid()->transform;
