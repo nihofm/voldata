@@ -144,14 +144,14 @@ glm::vec4 Volume::to_index(const glm::vec4& world) const {
     return glm::inverse(get_transform()) * world;
 }
 
-std::tuple<glm::vec3, glm::vec3> Volume::AABB() const {
+std::pair<glm::vec3, glm::vec3> Volume::AABB() const {
     if (grids.size() <= grid_frame) return { glm::vec4(0), glm::vec4(0) };
     const glm::vec3 wbb_min = glm::vec3(to_world(glm::vec4(0, 0, 0, 1)));
     const glm::vec3 wbb_max = glm::vec3(to_world(glm::vec4(glm::vec3(current_grid()->index_extent()), 1)));
     return { wbb_min, wbb_max };
 }
 
-std::tuple<float, float> Volume::minorant_majorant() const {
+std::pair<float, float> Volume::minorant_majorant() const {
     if (grids.size() <= grid_frame) return { 0.f, 0.f };
     return current_grid()->minorant_majorant();
 }

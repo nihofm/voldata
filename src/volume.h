@@ -27,9 +27,9 @@ public:
     glm::vec4 to_index(const glm::vec4& world) const;                   // transform from world- to index-space
 
     // AABB (world-space)
-    std::tuple<glm::vec3, glm::vec3> AABB() const;                      // world-space AABB
+    std::pair<glm::vec3, glm::vec3> AABB() const;                       // world-space AABB
     // minorant and majorant of the current grid
-    std::tuple<float, float> minorant_majorant() const;                 // minimum and maximal density values in the current grid
+    std::pair<float, float> minorant_majorant() const;                  // minimum and maximal density values in the current grid
 
     virtual std::string to_string(const std::string& indent="") const;  // string representation
 
