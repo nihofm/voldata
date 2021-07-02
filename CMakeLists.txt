@@ -26,11 +26,6 @@ add_compile_options(-Wall -Wno-unused-parameter -Wno-unused-variable -Wno-deprec
 
 include_directories(submodules)
 
-# tbb
-set(TBB_BUILD_TESTS OFF CACHE BOOL "disable building TBB tests" FORCE)
-include_directories(submodules/tbb/include)
-add_subdirectory(submodules/tbb)
-
 # cereal
 include_directories(submodules/cereal/include)
 
