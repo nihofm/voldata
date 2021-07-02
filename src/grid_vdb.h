@@ -22,6 +22,8 @@ public:
     size_t size_bytes() const;
     virtual std::string to_string(const std::string& indent="") const override;
 
+    // TODO write to vdb file
+
     // data
     openvdb::FloatGrid::Ptr grid;
     glm::ivec3 ibb_min, ibb_max;

@@ -18,24 +18,19 @@ int main(int argc, char** argv) {
 
     std::cout << "------------------" << std::endl;
     std::cout << "VDB grid:" << std::endl;
-    std::shared_ptr<voldata::Grid> grid = std::make_shared<voldata::OpenVDBGrid>(path);
-    std::cout << *grid << std::endl;
-
-    std::cout << "------------------" << std::endl;
-    std::cout << "VDB from dense grid:" << std::endl;
-    std::shared_ptr<voldata::OpenVDBGrid> vdb_from_dense_grid = std::make_shared<voldata::OpenVDBGrid>(*dense_grid);
-    std::cout << *vdb_from_dense_grid << std::endl;
+    std::shared_ptr<voldata::OpenVDBGrid> vdb_grid = std::make_shared<voldata::OpenVDBGrid>(volume->current_grid());
+    std::cout << *vdb_grid << std::endl;
 
     std::cout << "------------------" << std::endl;
     std::cout << "Brick grid:" << std::endl;
-    std::shared_ptr<voldata::BrickGrid> brick_grid = std::make_shared<voldata::BrickGrid>(grid);
+    std::shared_ptr<voldata::BrickGrid> brick_grid = std::make_shared<voldata::BrickGrid>(volume->current_grid());
     std::cout << *brick_grid << std::endl;
 
     std::cout << "------------------" << std::endl;
     const glm::ivec3 ipos = glm::ivec3(63, 64, 65) + glm::ivec3(32);
-    std::cout << "lookup vdb " << glm::to_string(ipos) << ": " << grid->lookup(ipos) << std::endl;
+    std::cout << "lookup grid " << glm::to_string(ipos) << ": " << volume->current_grid()->lookup(ipos) << std::endl;
     std::cout << "lookup dense " << glm::to_string(ipos) << ": " << dense_grid->lookup(ipos) << std::endl;
-    std::cout << "lookup vdb from dense " << glm::to_string(ipos) << ": " << vdb_from_dense_grid->lookup(ipos) << std::endl;
+    std::cout << "lookup vdb " << glm::to_string(ipos) << ": " << vdb_grid->lookup(ipos) << std::endl;
     std::cout << "lookup brick " << glm::to_string(ipos) << ": " << brick_grid->lookup(ipos) << std::endl;
     return 0;
 }
