@@ -74,7 +74,7 @@ float OpenVDBGrid::lookup(const glm::uvec3& ipos) const {
     return acc.getValue(openvdb::Coord(ipos.x + ibb_min.x, ipos.y + ibb_min.y, ipos.z + ibb_min.z));
 }
 
-std::tuple<float, float> OpenVDBGrid::minorant_majorant() const {
+std::pair<float, float> OpenVDBGrid::minorant_majorant() const {
     return { minorant, majorant };
 }
 

@@ -102,7 +102,7 @@ float DenseGrid::lookup(const glm::uvec3& ipos) const {
     return min_value + (voxel_data[idx] / 255.f) * (max_value - min_value);
 }
 
-std::tuple<float, float> DenseGrid::minorant_majorant() const { return { min_value, max_value }; }
+std::pair<float, float> DenseGrid::minorant_majorant() const { return { min_value, max_value }; }
 
 glm::uvec3 DenseGrid::index_extent() const { return n_voxels; }
 

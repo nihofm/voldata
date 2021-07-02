@@ -18,7 +18,7 @@ public:
     float lookup(const glm::uvec3& ipos) const; // lookup normalized value in [0, 1]
     float lookup_raw(const glm::uvec3& ipos) const; // lookup raw value from dicom in [min_value, max_value]
     float lookup_houndsfield(const glm::uvec3& ipos) const; // lookup rescaled houndsfield units
-    std::tuple<float, float> minorant_majorant() const; // always returns (0, 1)
+    std::pair<float, float> minorant_majorant() const; // always returns (0, 1)
     glm::uvec3 index_extent() const;
     size_t num_voxels() const;
     size_t size_bytes() const;

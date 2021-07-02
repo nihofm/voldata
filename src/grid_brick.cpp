@@ -148,7 +148,7 @@ float BrickGrid::lookup(const glm::uvec3& ipos) const {
     return decode_voxel(atlas[voxel], minmax);
 }
 
-std::tuple<float, float> BrickGrid::minorant_majorant() const { return min_maj; }
+std::pair<float, float> BrickGrid::minorant_majorant() const { return min_maj; }
 
 glm::uvec3 BrickGrid::index_extent() const { return n_bricks * BRICK_SIZE; }
 

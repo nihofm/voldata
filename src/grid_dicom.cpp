@@ -140,7 +140,7 @@ float DICOMGrid::lookup_houndsfield(const glm::uvec3& ipos) const {
     return rescale_slope * lookup_raw(ipos) + rescale_intercept; // rescale to houndsfield units
 }
 
-std::tuple<float, float> DICOMGrid::minorant_majorant() const { return { 0.f, 1.f }; }
+std::pair<float, float> DICOMGrid::minorant_majorant() const { return { 0.f, 1.f }; }
 
 glm::uvec3 DICOMGrid::index_extent() const { return n_voxels; }
 

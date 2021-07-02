@@ -17,7 +17,7 @@ public:
     virtual ~DenseGrid();
 
     float lookup(const glm::uvec3& ipos) const;
-    std::tuple<float, float> minorant_majorant() const;
+    std::pair<float, float> minorant_majorant() const;
     glm::uvec3 index_extent() const;
     size_t num_voxels() const;
     size_t size_bytes() const;
