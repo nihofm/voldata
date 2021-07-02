@@ -5,6 +5,9 @@
 #include <glm/glm.hpp>
 
 #include "grid.h"
+#include "grid_dense.h"
+#include "grid_brick.h"
+#include "grid_vdb.h"
 
 namespace voldata {
 
@@ -19,7 +22,10 @@ public:
     // grids
     void clear();
     void load_grid(const std::string& filepath);
-    std::shared_ptr<Grid> current_grid() const;
+    std::shared_ptr<Grid> current_grid() const;                         // return current grid
+    std::shared_ptr<DenseGrid> current_grid_dense() const;              // return current grid as BrickGrid, convert if necessary (costly!)
+    std::shared_ptr<BrickGrid> current_grid_brick() const;              // return current grid as BrickGrid, convert if necessary (costly!)
+    std::shared_ptr<OpenVDBGrid> current_grid_vdb() const;              // return current grid as OpenVDBGrid, convert if necessary (costly!)
 
     // transformation
     glm::mat4 get_transform() const;                                    // index- to world-space transformation matrix
