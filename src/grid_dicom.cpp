@@ -53,6 +53,8 @@ DICOMGrid::DICOMGrid(const std::vector<fs::path>& files) :
     for (size_t i = 0; i < files.size(); ++i) {
         dicom_datasets.push_back(imebra::CodecFactory::load(files[i].c_str()));
         dicom_images.push_back(dicom_datasets[i].getImage(0));
+        // print tags?
+        //if (i == 0) outputDatasetTags(dicom_datasets[i]);
 
         imebra::Image image = dicom_images[i];
         imebra::ReadingDataHandlerNumeric reader(image.getReadingDataHandler());
@@ -61,24 +63,15 @@ DICOMGrid::DICOMGrid(const std::vector<fs::path>& files) :
         n_voxels.y = std::max(n_voxels.y, image.getHeight());
         n_voxels.z += 1;
         
-        std::cout << "dicom image " << i << "/" << files.size() << ": " << image.getWidth() << "x" << image.getHeight() << "x" << image.getChannelsNumber() << "\r";
-        std::cout << std::flush;
-
-        //size_t size_bytes;
-        //const char* data = reader.data(&size_bytes);
-        //std::cout << "color space: " << image.getColorSpace() << std::endl;
-        //std::cout << "img size bytes: " << size_bytes << std::endl;
-        //std::cout << "bytes_per_value: " << reader.getUnitSize() << std::endl;
-        //std::cout << "signed: " << (reader.isSigned() ? 1 : 0) << std::endl;
-        //std::cout << "float: " << (reader.isFloat() ? 1 : 0) << std::endl;
-        //std::cout << "high bit: " << image.getHighBit() << std::endl;
+        std::cout << "reading dicom image " << i << "/" << files.size() << ": " <<
+            image.getWidth() << "x" << image.getHeight() << "x" << image.getChannelsNumber() << "\r" << std::flush;
 
         min_value = std::min(min_value, dicom_datasets[i].getFloat(imebra::TagId(imebra::tagId_t::SmallestImagePixelValue_0028_0106), 0, min_value));
         max_value = std::max(max_value, dicom_datasets[i].getFloat(imebra::TagId(imebra::tagId_t::LargestImagePixelValue_0028_0107), 0, max_value));
         size_bytes_total += image.getWidth() * image.getHeight() * image.getChannelsNumber() * reader.getUnitSize();
 
         if (i == 0) {
-            // extract transform from DICOM tags in first dataset
+            // extract transform from DICOM tags in first dataset (I hope/assume they're all identical..)
             const float psx = dicom_datasets[i].getFloat(imebra::TagId(imebra::tagId_t::PixelSpacing_0028_0030), 0, 1.f);
             transform[0][0] = psx * dicom_datasets[i].getFloat(imebra::TagId(imebra::tagId_t::ImageOrientationPatient_0020_0037), 0, 1.f);
             transform[0][1] = psx * dicom_datasets[i].getFloat(imebra::TagId(imebra::tagId_t::ImageOrientationPatient_0020_0037), 1, 0.f);
@@ -104,18 +97,6 @@ DICOMGrid::DICOMGrid(const std::vector<fs::path>& files) :
         }
     }
     std::cout << std::endl;
-
-    if (!dicom_datasets.empty()) outputDatasetTags(dicom_datasets[0]);
-
-    //std::cout << "pixel spacing 0: " << dicom_datasets[0].getFloat(imebra::TagId(imebra::tagId_t::PixelSpacing_0028_0030), 0, 1.f) << std::endl;
-    //std::cout << "pixel spacing 1: " << dicom_datasets[0].getFloat(imebra::TagId(imebra::tagId_t::PixelSpacing_0028_0030), 1, 1.f) << std::endl;
-    //std::cout << "slice thickness 0: " << dicom_datasets[0].getFloat(imebra::TagId(imebra::tagId_t::SliceThickness_0018_0050), 0, 1.f) << std::endl;
-    //std::cout << "slice thickness 0: " << dicom_datasets[0].getFloat(imebra::TagId(24, 80), 0, 1.f) << std::endl;
-    //std::cout << "min value 0: " << dicom_datasets[0].getFloat(imebra::TagId(imebra::tagId_t::SmallestImagePixelValue_0028_0106), 0, 0.f) << std::endl;
-    //std::cout << "max value 0: " << dicom_datasets[0].getFloat(imebra::TagId(imebra::tagId_t::LargestImagePixelValue_0028_0107), 0, 1.f) << std::endl;
-    //std::cout << "resc slope 0: " << dicom_datasets[0].getFloat(imebra::TagId(imebra::tagId_t::RescaleSlope_0028_1053), 0, 1.f) << std::endl;
-    //std::cout << "resc interc 0: " << dicom_datasets[0].getFloat(imebra::TagId(imebra::tagId_t::RescaleIntercept_0028_1052), 0, 0.f) << std::endl;
-
 }
 
 DICOMGrid::~DICOMGrid() {

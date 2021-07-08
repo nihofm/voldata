@@ -22,7 +22,8 @@ public:
     size_t size_bytes() const;
     virtual std::string to_string(const std::string& indent="") const override;
 
-    // TODO write to vdb file
+    // write to vdb file on disk
+    void write(const fs::path& path) const;
 
     // data
     openvdb::FloatGrid::Ptr grid;

@@ -19,6 +19,9 @@ OpenVDBGrid::OpenVDBGrid(const fs::path& filename, const std::string& gridname) 
     // cast to FloatGrid
     if (!baseGrid) throw std::runtime_error("No OpenVDB grid with name \"" + gridname + "\" found in " + filename.string());
     grid = openvdb::gridPtrCast<openvdb::FloatGrid>(baseGrid);
+    // set some meta data
+    grid->setName(gridname);
+    grid->setGridClass(openvdb::GRID_FOG_VOLUME);
     // compute index bounding box
     const openvdb::CoordBBox box = grid->evalActiveVoxelBoundingBox();
     ibb_min = num_voxels() == 0 ? glm::ivec3(0) : glm::ivec3(box.min().x(), box.min().y(), box.min().z());
@@ -36,7 +39,9 @@ OpenVDBGrid::OpenVDBGrid(const fs::path& filename, const std::string& gridname) 
 
 OpenVDBGrid::OpenVDBGrid(const Grid& other) : Grid(other) {
     const auto [min, maj] = other.minorant_majorant();
+    // create fog volume grid
     grid = openvdb::FloatGrid::create(min);
+    grid->setName("density");
     grid->setGridClass(openvdb::GRID_FOG_VOLUME);
     const auto isize = other.index_extent();
     auto acc = grid->getAccessor();
@@ -98,6 +103,16 @@ std::string OpenVDBGrid::to_string(const std::string& indent) const {
     out << indent << "ibb_max: " << glm::to_string(ibb_max) << std::endl;
     grid->print(out);
     return out.str().erase(out.str().rfind("]") + 1);
+}
+
+void OpenVDBGrid::write(const fs::path& path) const {
+    fs::path p = path; p.replace_extension(".vdb");
+    openvdb::io::File file(p);
+    openvdb::GridPtrVec grids;
+    grids.push_back(grid);
+    file.write(grids);
+    file.close();
+    std::cout << p << " written." << std::endl;
 }
 
 }

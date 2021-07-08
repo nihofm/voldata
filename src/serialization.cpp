@@ -1,4 +1,5 @@
 #include "serialization.h"
+#include "grid_vdb.h"
 
 #include <fstream>
 
@@ -30,11 +31,6 @@ namespace voldata {
         archive(buf.stride, buf.data);
     }
 
-    // base grid TODO inheritance?
-    template <class Archive> void serialize(Archive& archive, Grid& grid) {
-        archive(grid.transform);
-    }
-
     // dense grid
     template <class Archive> void serialize(Archive& archive, DenseGrid& grid) {
         archive(grid.transform, grid.n_voxels, grid.min_value, grid.max_value, grid.voxel_data);
@@ -57,6 +53,8 @@ namespace voldata {
             write<DenseGrid>(*dense, path);
         else if(BrickGrid* brick = dynamic_cast<BrickGrid*>(grid.get()))
             write<BrickGrid>(*brick, path);
+        else if(OpenVDBGrid* vdb = dynamic_cast<OpenVDBGrid*>(grid.get()))
+            vdb->write(path); // simply write out vdb file
         else
             throw std::runtime_error("Unsupported grid type!");
     }
