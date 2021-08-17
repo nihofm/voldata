@@ -1,6 +1,7 @@
 #include "grid_dicom.h"
 
 #include <numeric>
+#include <glm/gtx/string_cast.hpp>
 
 namespace voldata {
 

@@ -3,6 +3,7 @@
 #include <numeric>
 #include <algorithm>
 #include <execution>
+#include <glm/gtx/string_cast.hpp>
 
 namespace voldata {
 

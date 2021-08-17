@@ -4,6 +4,7 @@
 #include <numeric>
 #include <algorithm>
 #include <execution>
+#include <glm/gtx/string_cast.hpp>
 
 namespace voldata {
 
@@ -37,7 +38,6 @@ glm::uvec3 decode_ptr(uint32_t data) {
 }
 
 uint8_t encode_voxel(float value, const glm::vec2& range) {
-    assert(value >= range.x && value <= range.y);
     const float value_norm = glm::clamp((value - range.x) / (range.y - range.x), 0.f, 1.f);
     return uint8_t(std::round(255 * value_norm));
 }
