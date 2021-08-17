@@ -15,7 +15,7 @@ namespace fs = std::filesystem;
 
 namespace voldata {
 
-Volume::Volume() : model(glm::mat4(1)), albedo(1.f), phase(.5f), density_scale(1.f), grid_frame(0) {}
+Volume::Volume() : model(glm::mat4(1)), albedo(1.f), phase(0.f), density_scale(1.f), grid_frame(0) {}
 
 Volume::Volume(const std::string& filepath) : Volume() {
     load_grid(filepath);
