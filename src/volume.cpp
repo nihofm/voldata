@@ -112,7 +112,8 @@ void Volume::load_grid(const std::string& filepath) {
         }
         // lexographic sort
         std::sort(dicom_files.begin(), dicom_files.end(), [](const fs::path& lhs, const fs::path& rhs) {
-            return lhs.string().size() < rhs.string().size() || lhs.string() < rhs.string();
+            if (lhs.string().size() == rhs.string().size()) return lhs.string() < rhs.string();
+            else return lhs.string().size() < rhs.string().size();
         });
         grids.push_back(std::make_shared<DICOMGrid>(dicom_files));
     }
