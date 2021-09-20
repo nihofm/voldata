@@ -9,6 +9,7 @@ namespace voldata {
 
 class Grid {
 public:
+    Grid();
     virtual ~Grid() {}
 
     // grid interface

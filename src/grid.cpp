@@ -3,6 +3,8 @@
 
 namespace voldata {
 
+Grid::Grid() : transform(glm::mat4(1)) {}
+
 std::string Grid::to_string(const std::string& indent) const {
     std::stringstream out;
     const glm::uvec3 ibb_max = index_extent();
