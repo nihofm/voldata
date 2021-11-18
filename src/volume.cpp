@@ -15,18 +15,18 @@ namespace fs = std::filesystem;
 
 namespace voldata {
 
-Volume::Volume() : model(glm::mat4(1)), albedo(1.f), phase(0.f), density_scale(1.f), grid_frame(0) {}
+Volume::Volume() : grid_frame_counter(0), model(glm::mat4(1)), albedo(1.f), phase(0.f), density_scale(1.f), emission_scale(1.f) {}
 
-Volume::Volume(const std::string& filepath) : Volume() {
-    load_grid(filepath);
+Volume::Volume(const std::string& filename, const std::string& gridname) : Volume() {
+    add_grid_to_new_frame(load_grid(filename, gridname), gridname);
 }
 
-Volume::Volume(size_t w, size_t h, size_t d, const uint8_t* data) : Volume() {
-    grids.push_back(std::make_shared<DenseGrid>(w, h, d, data));
+Volume::Volume(size_t w, size_t h, size_t d, const uint8_t* data, const std::string& gridname) : Volume() {
+    add_grid_to_new_frame(std::make_shared<DenseGrid>(w, h, d, data), gridname);
 }
 
-Volume::Volume(size_t w, size_t h, size_t d, const float* data) : Volume() {
-    grids.push_back(std::make_shared<DenseGrid>(w, h, d, data));
+Volume::Volume(size_t w, size_t h, size_t d, const float* data, const std::string& gridname) : Volume() {
+    add_grid_to_new_frame(std::make_shared<DenseGrid>(w, h, d, data), gridname);
 }
 
 Volume::~Volume() {}
@@ -35,9 +35,89 @@ void Volume::clear() {
     grids.clear();
 }
 
-// TODO put weird data types in own file (factory)?
-void Volume::load_grid(const std::string& filepath) {
-    fs::path path = filepath;
+void Volume::add_grid_frame(const GridFrame& frame) {
+    grids.push_back(frame);
+}
+
+void Volume::add_grid_to_new_frame(const GridPtr& grid, const std::string& gridname) {
+    grid_frame_counter = grids.size();
+    grids.emplace_back();
+    grids[grid_frame_counter][gridname] = grid;
+}
+
+void Volume::update_current_grid(const GridPtr& grid, const std::string& gridname) {
+    grids[grid_frame_counter][gridname] = grid;
+}
+
+size_t Volume::n_grid_frames() const {
+    return grids.size();
+}
+
+bool Volume::has_grid(const std::string& gridname) const {
+    return current_grid_frame().find(gridname) != current_grid_frame().end();
+}
+
+Volume::GridFrame Volume::current_grid_frame() const {
+    return grids.at(grid_frame_counter);
+}
+
+Volume::GridPtr Volume::current_grid(const std::string& gridname) const {
+    return current_grid_frame().at(gridname);
+}
+
+Volume::DenseGridPtr Volume::current_grid_dense(const std::string& gridname) const {
+    return to_dense_grid(current_grid(gridname));
+}
+
+Volume::BrickGridPtr Volume::current_grid_brick(const std::string& gridname) const {
+    return to_brick_grid(current_grid(gridname));
+}
+
+Volume::OpenVDBGridPtr Volume::current_grid_vdb(const std::string& gridname) const {
+    return to_vdb_grid(current_grid(gridname));
+}
+
+// TODO: ensure matching transforms between grids in a frame?
+glm::mat4 Volume::get_transform() const {
+    if (grids.size() <= grid_frame_counter) return model;
+    return model * current_grid()->transform;
+}
+
+glm::vec4 Volume::to_world(const glm::vec4& index) const {
+    return get_transform() * index;
+}
+
+glm::vec4 Volume::to_index(const glm::vec4& world) const {
+    return glm::inverse(get_transform()) * world;
+}
+
+std::pair<glm::vec3, glm::vec3> Volume::AABB() const {
+    if (grids.size() <= grid_frame_counter) return { glm::vec4(0), glm::vec4(0) };
+    const glm::vec3 wbb_min = glm::vec3(to_world(glm::vec4(0, 0, 0, 1)));
+    const glm::vec3 wbb_max = glm::vec3(to_world(glm::vec4(glm::vec3(current_grid()->index_extent()), 1)));
+    return { wbb_min, wbb_max };
+}
+
+std::pair<float, float> Volume::minorant_majorant() const {
+    if (grids.size() <= grid_frame_counter) return { 0.f, 0.f };
+    return current_grid()->minorant_majorant();
+}
+
+std::string Volume::to_string(const std::string& indent) const {
+    std::stringstream out;
+    const auto [bb_min, bb_max] = AABB();
+    out << indent << "AABB: " << glm::to_string(bb_min) << " / " << glm::to_string(bb_max) << std::endl;
+    out << indent << "modelmatrix: " << glm::to_string(model) << std::endl;
+    out << indent << "current grid frame: " << grid_frame_counter << " / " << grids.size() << std::endl;
+    out << indent << "current grid: " << current_grid()->to_string(indent + "  ") << std::endl;
+    out << indent << "albedo: " << glm::to_string(albedo) << std::endl;
+    out << indent << "phase: " << phase << std::endl;
+    out << indent << "density scale: " << density_scale;
+    return out.str();
+}
+
+Volume::GridPtr Volume::load_grid(const std::string& filename, const std::string& gridname) {
+    fs::path path = filename;
     std::string extension = path.extension().string();
     std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
     // handle .dat files (Siemens renderer)
@@ -94,12 +174,11 @@ void Volume::load_grid(const std::string& filepath) {
             throw std::runtime_error("Unsupported data format for .dat file: " + format);
         // scale and map from z up to y up
         grid->transform = glm::scale(glm::rotate(glm::mat4(1), float(1.5 * M_PI), glm::vec3(1, 0, 0)), slice_thickness);
-        grids.push_back(grid);
+        return grid;
     }
     // handle OpenVDB files
     else if (extension == ".vdb") {
-        // TODO gridname parameter
-        grids.push_back(std::make_shared<OpenVDBGrid>(path, "density"));
+        return std::make_shared<OpenVDBGrid>(path, gridname);
     }
     // handle dicom files
     else if (extension == ".dcm") {
@@ -115,81 +194,35 @@ void Volume::load_grid(const std::string& filepath) {
             if (lhs.string().size() == rhs.string().size()) return lhs.string() < rhs.string();
             else return lhs.string().size() < rhs.string().size();
         });
-        grids.push_back(std::make_shared<DICOMGrid>(dicom_files));
+        return std::make_shared<DICOMGrid>(dicom_files);
     }
     // handle binary dense grid
     else if (extension == ".dense") {
-        grids.push_back(load_dense_grid(path));
+        return load_dense_grid(path);
     }
     // handle binary brick grid
     else if (extension == ".brick") {
-        grids.push_back(load_brick_grid(path));
+        return load_brick_grid(path);
     }
     else
         throw std::runtime_error("Unable to load file extension: " + extension);
 }
-
-std::shared_ptr<Grid> Volume::current_grid() const {
-    return grids.at(grid_frame);
-}
-
-std::shared_ptr<DenseGrid> Volume::current_grid_dense() const {
-    auto dense = std::dynamic_pointer_cast<DenseGrid>(current_grid()); // check type
-    if (!dense) dense = std::make_shared<DenseGrid>(current_grid()); // type not matching, convert grid
+Volume::DenseGridPtr Volume::to_dense_grid(const GridPtr& grid) {
+    auto dense = std::dynamic_pointer_cast<DenseGrid>(grid); // check type
+    if (!dense) dense = std::make_shared<DenseGrid>(grid); // type not matching, convert grid
     return dense;
 }
 
-std::shared_ptr<BrickGrid> Volume::current_grid_brick() const {
-    auto brick = std::dynamic_pointer_cast<BrickGrid>(current_grid()); // check type
-    if (!brick) brick = std::make_shared<BrickGrid>(current_grid()); // type not matching, convert grid
+Volume::BrickGridPtr Volume::to_brick_grid(const GridPtr& grid) {
+    auto brick = std::dynamic_pointer_cast<BrickGrid>(grid); // check type
+    if (!brick) brick = std::make_shared<BrickGrid>(grid); // type not matching, convert grid
     return brick;
 }
 
-std::shared_ptr<OpenVDBGrid> Volume::current_grid_vdb() const {
-    auto vdb = std::dynamic_pointer_cast<OpenVDBGrid>(current_grid()); // check type
-    if (!vdb) vdb = std::make_shared<OpenVDBGrid>(current_grid()); // type not matching, convert grid
+Volume::OpenVDBGridPtr Volume::to_vdb_grid(const GridPtr& grid) {
+    auto vdb = std::dynamic_pointer_cast<OpenVDBGrid>(grid); // check type
+    if (!vdb) vdb = std::make_shared<OpenVDBGrid>(grid); // type not matching, convert grid
     return vdb;
 }
-
-glm::mat4 Volume::get_transform() const {
-    if (grids.size() <= grid_frame) return model;
-    return model * current_grid()->transform;
-}
-
-glm::vec4 Volume::to_world(const glm::vec4& index) const {
-    return get_transform() * index;
-}
-
-glm::vec4 Volume::to_index(const glm::vec4& world) const {
-    return glm::inverse(get_transform()) * world;
-}
-
-std::pair<glm::vec3, glm::vec3> Volume::AABB() const {
-    if (grids.size() <= grid_frame) return { glm::vec4(0), glm::vec4(0) };
-    const glm::vec3 wbb_min = glm::vec3(to_world(glm::vec4(0, 0, 0, 1)));
-    const glm::vec3 wbb_max = glm::vec3(to_world(glm::vec4(glm::vec3(current_grid()->index_extent()), 1)));
-    return { wbb_min, wbb_max };
-}
-
-std::pair<float, float> Volume::minorant_majorant() const {
-    if (grids.size() <= grid_frame) return { 0.f, 0.f };
-    return current_grid()->minorant_majorant();
-}
-
-std::string Volume::to_string(const std::string& indent) const {
-    std::stringstream out;
-    const auto [bb_min, bb_max] = AABB();
-    out << indent << "AABB: " << glm::to_string(bb_min) << " / " << glm::to_string(bb_max) << std::endl;
-    out << indent << "modelmatrix: " << glm::to_string(model) << std::endl;
-    out << indent << "current grid frame: " << grid_frame << " / " << grids.size() << std::endl;
-    out << indent << "current grid: " << current_grid()->to_string(indent + "  ") << std::endl;
-    out << indent << "albedo: " << glm::to_string(albedo) << std::endl;
-    out << indent << "phase: " << phase << std::endl;
-    out << indent << "density scale: " << density_scale;
-    return out.str();
-
-}
-
-std::ostream& operator<<(std::ostream& out, const Volume& volume) { return out << volume.to_string(); }
 
 }
