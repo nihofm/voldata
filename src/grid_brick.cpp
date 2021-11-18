@@ -30,11 +30,15 @@ glm::vec2 decode_range(uint32_t data) {
 
 uint32_t encode_ptr(const glm::uvec3& ptr) {
     assert(ptr.x < MAX_BRICKS && ptr.y < MAX_BRICKS && ptr.z < MAX_BRICKS);
-    return glm::clamp(ptr.x, 0u, MAX_BRICKS-1) | (glm::clamp(ptr.y, 0u, MAX_BRICKS-1) << BITS_PER_AXIS) | (glm::clamp(ptr.z, 0u, MAX_BRICKS-1) << (2*BITS_PER_AXIS));
+    return (glm::clamp(ptr.x, 0u, MAX_BRICKS - 1) << (2 + 2 * BITS_PER_AXIS)) |
+           (glm::clamp(ptr.y, 0u, MAX_BRICKS - 1) << (2 + 1 * BITS_PER_AXIS)) |
+           (glm::clamp(ptr.z, 0u, MAX_BRICKS - 1) << (2 + 0 * BITS_PER_AXIS));
 }
 
 glm::uvec3 decode_ptr(uint32_t data) {
-    return glm::uvec3(data & (MAX_BRICKS-1), (data >> BITS_PER_AXIS) & (MAX_BRICKS-1), (data >> (2*BITS_PER_AXIS)) & (MAX_BRICKS-1));
+    return glm::uvec3((data >> (2 + 2 * BITS_PER_AXIS)) & (MAX_BRICKS - 1),
+                      (data >> (2 + 1 * BITS_PER_AXIS)) & (MAX_BRICKS - 1),
+                      (data >> (2 + 0 * BITS_PER_AXIS)) & (MAX_BRICKS - 1));
 }
 
 uint8_t encode_voxel(float value, const glm::vec2& range) {
