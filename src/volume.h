@@ -17,6 +17,7 @@ class Volume {
     using BrickGridPtr = std::shared_ptr<BrickGrid>;
     using OpenVDBGridPtr = std::shared_ptr<OpenVDBGrid>;
     using GridFrame = std::map<std::string, GridPtr>;
+    using VolumePtr = std::shared_ptr<Volume>;
 
 public:
     Volume();
@@ -53,6 +54,7 @@ public:
     static DenseGridPtr to_dense_grid(const GridPtr& grid);
     static BrickGridPtr to_brick_grid(const GridPtr& grid);
     static OpenVDBGridPtr to_vdb_grid(const GridPtr& grid);
+    static VolumePtr load_folder(const std::string& path, std::vector<std::string> gridnames = { "density" });
 
     // data
     size_t grid_frame_counter;          // current grid frame

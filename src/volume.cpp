@@ -2,6 +2,7 @@
 #include <fstream>
 #include <iostream>
 #include <algorithm>
+#include <execution>
 #include <filesystem>
 namespace fs = std::filesystem;
 #include <glm/gtc/matrix_transform.hpp>
@@ -15,7 +16,7 @@ namespace fs = std::filesystem;
 
 namespace voldata {
 
-Volume::Volume() : grid_frame_counter(0), model(glm::mat4(1)), albedo(1.f), phase(0.f), density_scale(1.f), emission_scale(1.f) {}
+Volume::Volume() : grid_frame_counter(0), model(glm::mat4(1)), albedo(1.f), phase(0.f), density_scale(1.f), emission_scale(0.f) {}
 
 Volume::Volume(const std::string& filename, const std::string& gridname) : Volume() {
     add_grid_to_new_frame(load_grid(filename, gridname), gridname);
@@ -187,12 +188,15 @@ Volume::GridPtr Volume::load_grid(const std::string& filename, const std::string
         for(auto& p : fs::directory_iterator(path.parent_path())) {
             std::string ext = p.path().extension().string();
             std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
-            if (ext == ".dcm") dicom_files.push_back(p);
+            if (ext == ".dcm")
+                dicom_files.push_back(p);
         }
         // lexographic sort
         std::sort(dicom_files.begin(), dicom_files.end(), [](const fs::path& lhs, const fs::path& rhs) {
-            if (lhs.string().size() == rhs.string().size()) return lhs.string() < rhs.string();
-            else return lhs.string().size() < rhs.string().size();
+            if (lhs.string().size() == rhs.string().size())
+                return lhs.string() < rhs.string();
+            else
+                return lhs.string().size() < rhs.string().size();
         });
         return std::make_shared<DICOMGrid>(dicom_files);
     }
@@ -207,6 +211,7 @@ Volume::GridPtr Volume::load_grid(const std::string& filename, const std::string
     else
         throw std::runtime_error("Unable to load file extension: " + extension);
 }
+
 Volume::DenseGridPtr Volume::to_dense_grid(const GridPtr& grid) {
     auto dense = std::dynamic_pointer_cast<DenseGrid>(grid); // check type
     if (!dense) dense = std::make_shared<DenseGrid>(grid); // type not matching, convert grid
@@ -223,6 +228,37 @@ Volume::OpenVDBGridPtr Volume::to_vdb_grid(const GridPtr& grid) {
     auto vdb = std::dynamic_pointer_cast<OpenVDBGrid>(grid); // check type
     if (!vdb) vdb = std::make_shared<OpenVDBGrid>(grid); // type not matching, convert grid
     return vdb;
+}
+
+Volume::VolumePtr Volume::load_folder(const std::string& path, std::vector<std::string> gridnames) {
+    // TODO: debug loading emission grids and bugs for building_implosion
+    VolumePtr result = std::make_shared<Volume>();
+    std::cout << "Loading grid files from " << path << "..." << std::endl;
+    // list files in given directory
+    std::vector<fs::path> files;
+    for(auto& p : fs::directory_iterator(fs::path(path)))
+        files.push_back(p);
+    // lexographic sort
+    std::sort(files.begin(), files.end(), [](const fs::path& lhs, const fs::path& rhs) {
+        if (lhs.string().size() == rhs.string().size())
+            return lhs.string() < rhs.string();
+        else
+            return lhs.string().size() < rhs.string().size();
+    });
+    // load and add grid frames in parallel
+    result->grids.resize(files.size());
+    std::vector<size_t> slices(files.size());
+    std::iota(slices.begin(), slices.end(), 0);
+    std::for_each(std::execution::par_unseq, slices.begin(), slices.end(), [&](size_t i) {
+        const fs::path file = files[i];
+        GridFrame& frame = result->grids[i];
+        for (const auto& gridname : gridnames) {
+            try {
+                frame[gridname] = load_grid(file, gridname);
+            } catch (std::runtime_error& e) {}
+        }
+    });
+    return result;
 }
 
 }
