@@ -18,16 +18,28 @@ namespace voldata {
 
 Volume::Volume() : grid_frame_counter(0), model(glm::mat4(1)), albedo(1.f), phase(0.f), density_scale(1.f), emission_scale(0.f) {}
 
+Volume::Volume(const GridPtr& grid, const std::string& gridname) : Volume() {
+    GridFrame frame;
+    frame[gridname] = grid;
+    add_grid_frame(frame);
+}
+
 Volume::Volume(const std::string& filename, const std::string& gridname) : Volume() {
-    add_grid_to_new_frame(load_grid(filename, gridname), gridname);
+    GridFrame frame;
+    frame[gridname] = load_grid(filename, gridname);
+    add_grid_frame(frame);
 }
 
 Volume::Volume(size_t w, size_t h, size_t d, const uint8_t* data, const std::string& gridname) : Volume() {
-    add_grid_to_new_frame(std::make_shared<DenseGrid>(w, h, d, data), gridname);
+    GridFrame frame;
+    frame[gridname] = std::make_shared<DenseGrid>(w, h, d, data);
+    add_grid_frame(frame);
 }
 
 Volume::Volume(size_t w, size_t h, size_t d, const float* data, const std::string& gridname) : Volume() {
-    add_grid_to_new_frame(std::make_shared<DenseGrid>(w, h, d, data), gridname);
+    GridFrame frame;
+    frame[gridname] = std::make_shared<DenseGrid>(w, h, d, data);
+    add_grid_frame(frame);
 }
 
 Volume::~Volume() {}
@@ -40,22 +52,16 @@ void Volume::add_grid_frame(const GridFrame& frame) {
     grids.push_back(frame);
 }
 
-void Volume::add_grid_to_new_frame(const GridPtr& grid, const std::string& gridname) {
-    grid_frame_counter = grids.size();
-    grids.emplace_back();
-    grids[grid_frame_counter][gridname] = grid;
+void Volume::update_grid_frame(const size_t i, const GridPtr& grid, const std::string& gridname) {
+    grids[i][gridname] = grid;
 }
 
-void Volume::update_current_grid(const GridPtr& grid, const std::string& gridname) {
-    grids[grid_frame_counter][gridname] = grid;
+bool Volume::has_grid(const size_t i, const std::string& gridname) const {
+    return grids.at(i).find(gridname) != grids.at(i).end();
 }
 
 size_t Volume::n_grid_frames() const {
     return grids.size();
-}
-
-bool Volume::has_grid(const std::string& gridname) const {
-    return current_grid_frame().find(gridname) != current_grid_frame().end();
 }
 
 Volume::GridFrame Volume::current_grid_frame() const {
@@ -79,29 +85,29 @@ Volume::OpenVDBGridPtr Volume::current_grid_vdb(const std::string& gridname) con
 }
 
 // TODO: ensure matching transforms between grids in a frame?
-glm::mat4 Volume::get_transform() const {
+glm::mat4 Volume::get_transform(const std::string& gridname) const {
     if (grids.size() <= grid_frame_counter) return model;
-    return model * current_grid()->transform;
+    return model * current_grid(gridname)->transform;
 }
 
-glm::vec4 Volume::to_world(const glm::vec4& index) const {
-    return get_transform() * index;
+glm::vec4 Volume::to_world(const glm::vec4& index, const std::string& gridname) const {
+    return get_transform(gridname) * index;
 }
 
-glm::vec4 Volume::to_index(const glm::vec4& world) const {
-    return glm::inverse(get_transform()) * world;
+glm::vec4 Volume::to_index(const glm::vec4& world, const std::string& gridname) const {
+    return glm::inverse(get_transform(gridname)) * world;
 }
 
-std::pair<glm::vec3, glm::vec3> Volume::AABB() const {
+std::pair<glm::vec3, glm::vec3> Volume::AABB(const std::string& gridname) const {
     if (grids.size() <= grid_frame_counter) return { glm::vec4(0), glm::vec4(0) };
-    const glm::vec3 wbb_min = glm::vec3(to_world(glm::vec4(0, 0, 0, 1)));
-    const glm::vec3 wbb_max = glm::vec3(to_world(glm::vec4(glm::vec3(current_grid()->index_extent()), 1)));
+    const glm::vec3 wbb_min = glm::vec3(to_world(glm::vec4(0, 0, 0, 1), gridname));
+    const glm::vec3 wbb_max = glm::vec3(to_world(glm::vec4(glm::vec3(current_grid()->index_extent()), 1), gridname));
     return { wbb_min, wbb_max };
 }
 
-std::pair<float, float> Volume::minorant_majorant() const {
+std::pair<float, float> Volume::minorant_majorant(const std::string& gridname) const {
     if (grids.size() <= grid_frame_counter) return { 0.f, 0.f };
-    return current_grid()->minorant_majorant();
+    return current_grid(gridname)->minorant_majorant();
 }
 
 std::string Volume::to_string(const std::string& indent) const {
@@ -231,13 +237,14 @@ Volume::OpenVDBGridPtr Volume::to_vdb_grid(const GridPtr& grid) {
 }
 
 Volume::VolumePtr Volume::load_folder(const std::string& path, std::vector<std::string> gridnames) {
-    // TODO: debug loading emission grids and bugs for building_implosion
+    // TODO FIXME: debug crash on loading empty grids
     VolumePtr result = std::make_shared<Volume>();
     std::cout << "Loading grid files from " << path << "..." << std::endl;
     // list files in given directory
     std::vector<fs::path> files;
     for(auto& p : fs::directory_iterator(fs::path(path)))
         files.push_back(p);
+    // TODO FIXME: filter files based on type
     // lexographic sort
     std::sort(files.begin(), files.end(), [](const fs::path& lhs, const fs::path& rhs) {
         if (lhs.string().size() == rhs.string().size())
@@ -254,7 +261,7 @@ Volume::VolumePtr Volume::load_folder(const std::string& path, std::vector<std::
         GridFrame& frame = result->grids[i];
         for (const auto& gridname : gridnames) {
             try {
-                frame[gridname] = load_grid(file, gridname);
+                result->update_grid_frame(i, load_grid(file, gridname), gridname);
             } catch (std::runtime_error& e) {}
         }
     });

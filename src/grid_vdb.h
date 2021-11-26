@@ -20,14 +20,14 @@ public:
     glm::uvec3 index_extent() const;
     size_t num_voxels() const;
     size_t size_bytes() const;
-    virtual std::string to_string(const std::string& indent="") const override;
 
     // write to vdb file on disk
     void write(const fs::path& path) const;
 
     // data
     openvdb::FloatGrid::Ptr grid;
-    glm::ivec3 ibb_min, ibb_max;
+    glm::ivec3 ibb_min;
+    glm::uvec3 extent;
     float minorant, majorant;
 };
 
