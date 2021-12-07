@@ -14,9 +14,11 @@ namespace fs = std::filesystem;
 #include "grid_dicom.h"
 #include "serialization.h"
 
+#include <openvdb/tools/GridTransformer.h>
+
 namespace voldata {
 
-Volume::Volume() : grid_frame_counter(0), model(glm::mat4(1)), albedo(1.f), phase(0.f), density_scale(1.f), emission_scale(0.f) {}
+Volume::Volume() : grid_frame_counter(0), model(glm::mat4(1)), albedo(0.5), phase(0.0), density_scale(1.0), emission_scale(1.0) {}
 
 Volume::Volume(const GridPtr& grid, const std::string& gridname) : Volume() {
     GridFrame frame;
@@ -53,6 +55,48 @@ void Volume::add_grid_frame(const GridFrame& frame) {
 }
 
 void Volume::update_grid_frame(const size_t i, const GridPtr& grid, const std::string& gridname) {
+    if (grids[i].find("density") != grids[i].end() && (gridname == "flame" || gridname == "temperature")) {
+        const auto& target_grid = std::dynamic_pointer_cast<OpenVDBGrid>(grids[i]["density"]);
+        auto source_grid = std::dynamic_pointer_cast<OpenVDBGrid>(grid);
+        if (target_grid && source_grid) {
+            // TODO XXX FIXME DEBUG: align emission grid with density grid
+            /*
+            // set transform
+            // source_grid->grid->setTransform(target_grid->grid->transformPtr());
+            // source_grid->transform = target_grid->transform;
+
+            // const openvdb::CoordBBox box = grid->evalActiveVoxelBoundingBox();
+            // ibb_min = num_voxels() == 0 ? glm::ivec3(0) : glm::ivec3(box.min().x(), box.min().y(), box.min().z());
+            // transform[3] += transform * glm::vec4(ibb_min.x, ibb_min.y, ibb_min.z, 0);
+
+            // resample
+            // openvdb::tools::resampleToMatch<openvdb::tools::BoxSampler>(*target_grid->grid, *source_grid->grid);
+
+            const auto target_bb_min = glm::vec3(target_grid->transform * glm::vec4(0, 0, 0, 1));
+            const auto target_bb_max = glm::vec3(target_grid->transform * glm::vec4(target_grid->index_extent().x, target_grid->index_extent().y, target_grid->index_extent().z, 1));
+            const auto source_bb_min = glm::vec3(source_grid->transform * glm::vec4(0, 0, 0, 1));
+            const auto source_bb_max = glm::vec3(source_grid->transform * glm::vec4(source_grid->index_extent().x, source_grid->index_extent().y, source_grid->index_extent().z, 1));
+            // align lower corner
+            // source_grid->transform[3] += glm::vec4(target_bb_min - source_bb_min, 0);
+            // resampled_grid->transform = glm::translate(resampled_grid->transform, target_bb_min - source_bb_min);
+            // stretch to fit
+            const auto diag_target = target_bb_max - target_bb_min;
+            const auto diag_source = source_bb_max - source_bb_min;
+            // resampled_grid->transform[3] += resampled_grid->transform * glm::vec4(target_bb_min - source_bb_min, 0);
+            // source_grid->transform = glm::scale(source_grid->transform, diag_target / diag_source);
+
+            std::cout << "---------------------" << std::endl;
+            std::cout << "Extent density  : " << glm::to_string(target_grid->index_extent()) << std::endl;
+            std::cout << "AABB min density: " << glm::to_string(glm::vec3(target_grid->transform * glm::vec4(0, 0, 0, 1))) << std::endl;
+            std::cout << "AABB max density: " << glm::to_string(glm::vec3(target_grid->transform * glm::vec4(target_grid->index_extent().x, target_grid->index_extent().y, target_grid->index_extent().z, 1))) << std::endl;
+            std::cout << "Extent flame    : " << glm::to_string(source_grid->index_extent()) << std::endl;
+            std::cout << "AABB min flame  : " << glm::to_string(glm::vec3(source_grid->transform * glm::vec4(0, 0, 0, 1))) << std::endl;
+            std::cout << "AABB max flame  : " << glm::to_string(glm::vec3(source_grid->transform * glm::vec4(source_grid->index_extent().x, source_grid->index_extent().y, source_grid->index_extent().z, 1))) << std::endl;
+            std::cout << "AABB translate: " << glm::to_string(target_bb_min - source_bb_min) << std::endl;
+            std::cout << "AABB scale    : " << glm::to_string(diag_target / diag_source) << std::endl;
+            */
+        }
+    }
     grids[i][gridname] = grid;
 }
 

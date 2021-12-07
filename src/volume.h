@@ -42,7 +42,7 @@ public:
     OpenVDBGridPtr current_grid_vdb(const std::string& gridname = "density") const;             // return grid from current frame as OpenVDBGrid, convert if necessary
 
     // transformation, AABB (world space) and extrema of the current grid
-    glm::mat4 get_transform(const std::string& gridname = "density") const;                                                    // index- to world-space transformation matrix
+    glm::mat4 get_transform(const std::string& gridname = "density") const;                     // index- to world-space transformation matrix
     glm::vec4 to_world(const glm::vec4& index, const std::string& gridname = "density") const;  // transform from index- to world-space
     glm::vec4 to_index(const glm::vec4& world, const std::string& gridname = "density") const;  // transform from world- to index-space
     std::pair<glm::vec3, glm::vec3> AABB(const std::string& gridname = "density") const;        // world-space AABB
