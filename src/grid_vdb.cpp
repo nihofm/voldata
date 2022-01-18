@@ -1,4 +1,4 @@
-#include "grid_vdb.h"
+#include <voldata/grid_vdb.h>
 #include <glm/gtx/string_cast.hpp>
 
 namespace voldata {

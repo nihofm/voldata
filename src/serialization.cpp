@@ -1,5 +1,6 @@
-#include "serialization.h"
-#include "grid_vdb.h"
+#include <voldata/serialization.h>
+#include <voldata/grid_vdb.h>
+#include <voldata/grid_nvdb.h>
 
 #include <fstream>
 
@@ -46,6 +47,7 @@ namespace voldata {
         std::ofstream file(path, std::ios::binary);
         cereal::PortableBinaryOutputArchive archive(file);
         archive(data);
+        std::cout << path << " written." << std::endl;
     }
 
     void write_grid(const std::shared_ptr<Grid>& grid, const fs::path& path) {
@@ -54,7 +56,9 @@ namespace voldata {
         else if(BrickGrid* brick = dynamic_cast<BrickGrid*>(grid.get()))
             write<BrickGrid>(*brick, path);
         else if(OpenVDBGrid* vdb = dynamic_cast<OpenVDBGrid*>(grid.get()))
-            vdb->write(path); // simply write out vdb file
+            vdb->write(path); // write out vdb file
+        else if(NanoVDBGrid* nvdb = dynamic_cast<NanoVDBGrid*>(grid.get()))
+            nvdb->write(path); // write out nvdb file
         else
             throw std::runtime_error("Unsupported grid type!");
     }

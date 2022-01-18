@@ -1,4 +1,6 @@
-#include "grid.h"
+#include <voldata/grid.h>
+
+#include <sstream>
 #include <glm/gtx/string_cast.hpp>
 
 namespace voldata {

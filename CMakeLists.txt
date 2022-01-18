@@ -1,28 +1,19 @@
-project(voldata LANGUAGES C CXX)
-cmake_minimum_required(VERSION 3.10)
 
-# ---------------------------------------------------------------------
-# path management
+cmake_minimum_required(VERSION 3.18)
 
-# output directories
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
+PROJECT(voldata
+    VERSION 0.2
+    DESCRIPTION "3D volume loading/management framework."
+    LANGUAGES C CXX
+)
 
 # ---------------------------------------------------------------------
 # options
 
-# ---------------------------------------------------------------------
-# compiler flags
-
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-add_compile_options(-pthread -march=native)
-add_compile_options(-Wall -Wno-unused-parameter -Wno-unused-variable -Wno-deprecated-declarations)
+option(VOLDATA_BUILD_TOOLS "Build voldata tools." ON)
 
 # ---------------------------------------------------------------------
-# submodules
+# dependencies
 
 include_directories(submodules)
 
@@ -30,19 +21,47 @@ include_directories(submodules)
 include_directories(submodules/cereal/include)
 
 # openvdb
-set(OPENVDB_BUILD_BINARIES OFF CACHE BOOL "disable openvdb binaries" FORCE)
-set(OPENVDB_ENABLE_UNINSTALL OFF CACHE BOOL "disable openvdb uninstall" FORCE)
-set(OPENVDB_BUILD_PYTHON_MODULE OFF CACHE BOOL "enable openvdb python module" FORCE)
-set(OPENVDB_CORE_STATIC OFF CACHE BOOL "disable static openvdb lib" FORCE)
+set(OPENVDB_BUILD_BINARIES OFF CACHE BOOL "" FORCE)
+set(OPENVDB_ENABLE_UNINSTALL OFF CACHE BOOL "" FORCE)
+set(OPENVDB_CORE_SHARED ON CACHE BOOL "" FORCE)
+set(OPENVDB_CORE_STATIC OFF CACHE BOOL "" FORCE)
 add_subdirectory(submodules/openvdb)
 include_directories(submodules/openvdb)
+include_directories(submodules/openvdb/nanovdb)
 
 # imebra
+set(IMEBRA_SHARED_STATIC SHARED CACHE BOOL "" FORCE)
 add_subdirectory(submodules/imebra)
 include_directories(submodules/imebra/library/include)
+
+# ---------------------------------------------------------------------
+# compiler setup
+
+if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+	message(STATUS "No release type specified. Setting to 'Release'.")
+	set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
+	set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "RelWithDebInfo")
+endif()
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+# ---------------------------------------------------------------------
+# directory management
+
+include_directories("include")
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR})
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ${CMAKE_BINARY_DIR})
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL ${CMAKE_BINARY_DIR})
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR})
 
 # ---------------------------------------------------------------------
 # traverse source tree
 
 add_subdirectory(src)
-add_subdirectory(tools)
+
+if (VOLDATA_BUILD_TOOLS)
+    add_subdirectory(tools)
+endif()

@@ -1,13 +1,14 @@
 #pragma once
 
+#include <voldata/grid.h>
+#include <voldata/grid_dense.h>
+#include <voldata/grid_brick.h>
+#include <voldata/grid_vdb.h>
+#include <voldata/grid_nvdb.h>
+
 #include <vector>
 #include <string>
 #include <glm/glm.hpp>
-
-#include "grid.h"
-#include "grid_dense.h"
-#include "grid_brick.h"
-#include "grid_vdb.h"
 
 namespace voldata {
 
@@ -16,6 +17,7 @@ class Volume {
     using DenseGridPtr = std::shared_ptr<DenseGrid>;
     using BrickGridPtr = std::shared_ptr<BrickGrid>;
     using OpenVDBGridPtr = std::shared_ptr<OpenVDBGrid>;
+    using NanoVDBGridPtr = std::shared_ptr<NanoVDBGrid>;
     using GridFrame = std::map<std::string, GridPtr>;
     using VolumePtr = std::shared_ptr<Volume>;
 
@@ -40,6 +42,7 @@ public:
     DenseGridPtr current_grid_dense(const std::string& gridname = "density") const;             // return grid from current frame as BrickGrid, convert if necessary
     BrickGridPtr current_grid_brick(const std::string& gridname = "density") const;             // return grid from current frame as BrickGrid, convert if necessary
     OpenVDBGridPtr current_grid_vdb(const std::string& gridname = "density") const;             // return grid from current frame as OpenVDBGrid, convert if necessary
+    NanoVDBGridPtr current_grid_nvdb(const std::string& gridname = "density") const;             // return grid from current frame as NanoVDBGrid, convert if necessary
 
     // transformation, AABB (world space) and extrema of the current grid
     glm::mat4 get_transform(const std::string& gridname = "density") const;                     // index- to world-space transformation matrix
@@ -54,6 +57,7 @@ public:
     static DenseGridPtr to_dense_grid(const GridPtr& grid);
     static BrickGridPtr to_brick_grid(const GridPtr& grid);
     static OpenVDBGridPtr to_vdb_grid(const GridPtr& grid);
+    static NanoVDBGridPtr to_nvdb_grid(const GridPtr& grid);
     static VolumePtr load_folder(const std::string& path, std::vector<std::string> gridnames = { "density" });
 
     // data

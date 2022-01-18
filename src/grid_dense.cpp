@@ -1,4 +1,4 @@
-#include "grid_dense.h"
+#include <voldata/grid_dense.h>
 
 #include <numeric>
 #include <algorithm>
@@ -14,7 +14,6 @@ DenseGrid::DenseGrid(const Grid& grid) :
     n_voxels(grid.index_extent()),
     min_value(std::get<0>(grid.minorant_majorant())),
     max_value(std::get<1>(grid.minorant_majorant()))
-
 {
     std::vector<uint32_t> slices(n_voxels.z);
     std::iota(slices.begin(), slices.end(), 0);

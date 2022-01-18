@@ -1,6 +1,7 @@
-#include "grid_brick.h"
+#include <voldata/grid_brick.h>
 
 #include <iostream>
+#include <sstream>
 #include <numeric>
 #include <algorithm>
 #include <execution>
@@ -94,7 +95,7 @@ BrickGrid::BrickGrid(const Grid& grid) :
                 if (local_max == local_min) continue;
                 // allocate memory for brick
                 const size_t id = brick_counter.fetch_add(1, std::memory_order_relaxed);
-                const glm::uvec3 ptr = indirection.linear_coord(id);
+                const glm::uvec3 ptr = indirection.to_coord(id);
                 // store pointer (offset)
                 indirection[brick] = encode_ptr(ptr);
                 // store brick data

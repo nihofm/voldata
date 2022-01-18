@@ -1,4 +1,7 @@
-#include "volume.h"
+#include <voldata/volume.h>
+#include <voldata/grid_dicom.h>
+#include <voldata/serialization.h>
+
 #include <fstream>
 #include <iostream>
 #include <algorithm>
@@ -8,17 +11,11 @@ namespace fs = std::filesystem;
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/string_cast.hpp>
 
-#include "grid_vdb.h"
-#include "grid_brick.h"
-#include "grid_dense.h"
-#include "grid_dicom.h"
-#include "serialization.h"
-
-#include <openvdb/tools/GridTransformer.h>
+// #include <openvdb/tools/GridTransformer.h>
 
 namespace voldata {
 
-Volume::Volume() : grid_frame_counter(0), model(glm::mat4(1)), albedo(0.5), phase(0.0), density_scale(1.0), emission_scale(1.0) {}
+Volume::Volume() : grid_frame_counter(0), model(glm::mat4(1)), albedo(1), phase(0.0), density_scale(1.0), emission_scale(1.0) {}
 
 Volume::Volume(const GridPtr& grid, const std::string& gridname) : Volume() {
     GridFrame frame;
@@ -128,6 +125,10 @@ Volume::OpenVDBGridPtr Volume::current_grid_vdb(const std::string& gridname) con
     return to_vdb_grid(current_grid(gridname));
 }
 
+Volume::NanoVDBGridPtr Volume::current_grid_nvdb(const std::string& gridname) const {
+    return to_nvdb_grid(current_grid(gridname));
+}
+
 // TODO: ensure matching transforms between grids in a frame?
 glm::mat4 Volume::get_transform(const std::string& gridname) const {
     if (grids.size() <= grid_frame_counter) return model;
@@ -231,6 +232,10 @@ Volume::GridPtr Volume::load_grid(const std::string& filename, const std::string
     else if (extension == ".vdb") {
         return std::make_shared<OpenVDBGrid>(path, gridname);
     }
+    // handle NanoVDB files
+    else if (extension == ".nvdb") {
+        return std::make_shared<NanoVDBGrid>(path, gridname);
+    }
     // handle dicom files
     else if (extension == ".dcm") {
         // search directory for other dicom files
@@ -278,6 +283,12 @@ Volume::OpenVDBGridPtr Volume::to_vdb_grid(const GridPtr& grid) {
     auto vdb = std::dynamic_pointer_cast<OpenVDBGrid>(grid); // check type
     if (!vdb) vdb = std::make_shared<OpenVDBGrid>(grid); // type not matching, convert grid
     return vdb;
+}
+
+Volume::NanoVDBGridPtr Volume::to_nvdb_grid(const GridPtr& grid) {
+    auto nvdb = std::dynamic_pointer_cast<NanoVDBGrid>(grid); // check type
+    if (!nvdb) nvdb = std::make_shared<NanoVDBGrid>(grid); // type not matching, convert grid
+    return nvdb;
 }
 
 Volume::VolumePtr Volume::load_folder(const std::string& path, std::vector<std::string> gridnames) {
