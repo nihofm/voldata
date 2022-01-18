@@ -12,6 +12,8 @@ PROJECT(voldata
 
 option(VOLDATA_BUILD_TOOLS "Build voldata tools." ON)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # ---------------------------------------------------------------------
 # dependencies
 
@@ -50,7 +52,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # ---------------------------------------------------------------------
 # directory management
 
-include_directories("include")
+include_directories(include)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ${CMAKE_BINARY_DIR})
