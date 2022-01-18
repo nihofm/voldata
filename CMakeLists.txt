@@ -22,13 +22,20 @@ include_directories(submodules)
 # cereal
 include_directories(submodules/cereal/include)
 
-# openvdb
-set(OPENVDB_BUILD_BINARIES OFF CACHE BOOL "" FORCE)
-set(OPENVDB_ENABLE_UNINSTALL OFF CACHE BOOL "" FORCE)
-set(OPENVDB_CORE_SHARED ON CACHE BOOL "" FORCE)
-set(OPENVDB_CORE_STATIC OFF CACHE BOOL "" FORCE)
-add_subdirectory(submodules/openvdb)
-include_directories(submodules/openvdb)
+# openvdb (prefer system version)
+find_package(OpenVDB)
+if (NOT OpenVDB_FOUND)
+    set(OPENVDB_BUILD_BINARIES OFF CACHE BOOL "" FORCE)
+    set(OPENVDB_ENABLE_UNINSTALL OFF CACHE BOOL "" FORCE)
+    set(OPENVDB_CORE_SHARED ON CACHE BOOL "" FORCE)
+    set(OPENVDB_CORE_STATIC OFF CACHE BOOL "" FORCE)
+    add_subdirectory(submodules/openvdb)
+    include_directories(submodules/openvdb)
+else()
+    include_directories(${OpenVDB_INCLUDE_DIR})
+endif()
+
+# nanovdb
 include_directories(submodules/openvdb/nanovdb)
 
 # imebra
