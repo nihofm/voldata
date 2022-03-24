@@ -36,7 +36,7 @@ include_directories(submodules/cereal/include)
 
 # openvdb (prefer system version)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/submodules/openvdb/cmake")
-find_package(OpenVDB)
+find_package(OpenVDB QUIET)
 if (NOT OpenVDB_FOUND)
     set(OPENVDB_BUILD_BINARIES OFF CACHE BOOL "" FORCE)
     set(OPENVDB_ENABLE_UNINSTALL OFF CACHE BOOL "" FORCE)
