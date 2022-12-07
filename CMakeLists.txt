@@ -9,7 +9,8 @@ PROJECT(voldata
 # ---------------------------------------------------------------------
 # options
 
-option(VOLDATA_BUILD_TOOLS "Build voldata tools." OFF)
+option(VOLDATA_BUILD_GLM ON)
+option(VOLDATA_BUILD_TOOLS OFF)
 
 # ---------------------------------------------------------------------
 # compiler setup
@@ -31,12 +32,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 include_directories(submodules)
 
 # glm
-find_package(glm QUIET)
-if (NOT glm_FOUND)
+if (VOLDATA_BUILD_GLM)
     add_subdirectory(submodules/glm)
     include_directories(submodules/glm)
-else()
-    include_directories(${glm_INCLUDE_DIRS})
 endif()
 
 # cereal
