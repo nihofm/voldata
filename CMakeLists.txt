@@ -10,6 +10,7 @@ PROJECT(voldata
 # options
 
 option(VOLDATA_BUILD_GLM ON)
+option(VOLDATA_BUILD_OPENVDB ON)
 option(VOLDATA_BUILD_TOOLS OFF)
 
 # ---------------------------------------------------------------------
@@ -40,18 +41,14 @@ endif()
 # cereal
 include_directories(submodules/cereal/include)
 
-# openvdb (prefer system version)
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/submodules/openvdb/cmake")
-find_package(OpenVDB QUIET)
-if (NOT OpenVDB_FOUND)
+# openvdb
+if (VOLDATA_BUILD_OPENVDB)
     set(OPENVDB_BUILD_BINARIES OFF CACHE BOOL "" FORCE)
     set(OPENVDB_ENABLE_UNINSTALL OFF CACHE BOOL "" FORCE)
     set(OPENVDB_CORE_SHARED OFF CACHE BOOL "" FORCE)
     set(OPENVDB_CORE_STATIC ON CACHE BOOL "" FORCE)
     add_subdirectory(submodules/openvdb)
     include_directories(submodules/openvdb)
-else()
-    include_directories(${OpenVDB_INCLUDE_DIR})
 endif()
 
 # nanovdb
