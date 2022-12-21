@@ -31,8 +31,9 @@ OpenVDBGrid::OpenVDBGrid(const fs::path& filename, const std::string& gridname) 
     const openvdb::Coord dim = grid->evalActiveVoxelDim();
     extent = glm::uvec3(dim.x(), dim.y(), dim.z());
     // compute minorant and majorant
-    grid->evalMinMax(minorant, majorant);
-    minorant = std::min(minorant, grid->background());
+    openvdb::math::MinMax extrema = openvdb::tools::minMax(grid->tree());
+    minorant = std::min(extrema.min(), grid->background());
+    majorant = extrema.max();
     // extract transform
     if (!grid->transform().isLinear()) throw std::runtime_error("Only linear transformations supported!");
     const openvdb::Mat4R mat4 = grid->transform().baseMap()->getAffineMap()->getMat4();
@@ -67,8 +68,9 @@ OpenVDBGrid::OpenVDBGrid(const Grid& other) : Grid(other) {
     const openvdb::CoordBBox box = grid->evalActiveVoxelBoundingBox();
     ibb_min = num_voxels() == 0 ? glm::ivec3(0) : glm::ivec3(box.min().x(), box.min().y(), box.min().z());
     // compute minorant and majorant
-    grid->evalMinMax(minorant, majorant);
-    minorant = std::min(minorant, grid->background());
+    openvdb::math::MinMax extrema = openvdb::tools::minMax(grid->tree());
+    minorant = std::min(extrema.min(), grid->background());
+    majorant = extrema.max();
     // set transform
     openvdb::Mat4R mat4;
     for (int i = 0; i < 4; ++i)

@@ -45,9 +45,6 @@ else()
     add_definitions(-UVOLDATA_WITH_OPENVDB)
 endif()
 
-# nanovdb
-include_directories(submodules/openvdb/nanovdb)
-
 # ---------------------------------------------------------------------
 # compiler setup
 
