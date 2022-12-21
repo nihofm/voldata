@@ -116,10 +116,12 @@ std::string Volume::to_string(const std::string& indent) const {
     std::stringstream out;
     const auto [bb_min, bb_max] = AABB();
     out << indent << "AABB: " << glm::to_string(bb_min) << " / " << glm::to_string(bb_max) << std::endl;
-    out << indent << "modelmatrix: " << glm::to_string(model) << std::endl;
+    out << indent << "modelmatrix: " << std::endl;
+    for (int i = 0; i < 4; ++i)
+        out << indent << "    " << std::fixed << model[0][i] << ", " << model[1][i] << ", " << model[2][i] << ", " << model[3][i] << std::endl;
     out << indent << "current grid frame: " << grid_frame_counter << " / " << grids.size() << std::endl;
     out << indent << "current grid: " << std::endl;
-    out << indent << current_grid()->to_string("\t") << std::endl;
+    out << current_grid()->to_string(indent + "    ") << std::endl;
     out << indent << "albedo: " << glm::to_string(albedo) << std::endl;
     out << indent << "phase: " << phase << std::endl;
     out << indent << "density scale: " << density_scale;

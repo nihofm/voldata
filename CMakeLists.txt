@@ -13,9 +13,21 @@ option(VOLDATA_BUILD_GLM "" ON)
 option(VOLDATA_BUILD_TOOLS "" OFF)
 
 # ---------------------------------------------------------------------
+# compiler setup
+
+if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+	message(STATUS "No release type specified. Setting to 'Release'.")
+	set(CMAKE_BUILD_TYPE Release)
+	set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "RelWithDebInfo")
+endif()
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# ---------------------------------------------------------------------
 # dependencies
 
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 include_directories(submodules)
 
@@ -44,19 +56,6 @@ else()
     message(STATUS "OpenVDB NOT found, compiling without OpenVDB support...")
     add_definitions(-UVOLDATA_WITH_OPENVDB)
 endif()
-
-# ---------------------------------------------------------------------
-# compiler setup
-
-if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-	message(STATUS "No release type specified. Setting to 'Release'.")
-	set(CMAKE_BUILD_TYPE Release)
-	set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "RelWithDebInfo")
-endif()
-
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 # ---------------------------------------------------------------------
 # directory management
 
