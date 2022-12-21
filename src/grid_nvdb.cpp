@@ -1,18 +1,11 @@
 #include <voldata/grid_nvdb.h>
-#include <voldata/grid_vdb.h>
 #include <nanovdb/util/IO.h>
 #include <nanovdb/util/GridBuilder.h>
-#include <nanovdb/util/OpenToNanoVDB.h>
 
 namespace voldata {
 
 NanoVDBGrid::NanoVDBGrid(const fs::path& path, const std::string& gridname) {
-    // TODO: convert from openvdb
-    if (path.extension() == ".vdb") {
-        const auto vdb = std::make_shared<OpenVDBGrid>(path, gridname);
-        handle = nanovdb::openToNanoVDB(vdb->grid);
-    } else
-        handle = nanovdb::io::readGrid<nanovdb::HostBuffer>(path.string(), gridname);
+    handle = nanovdb::io::readGrid<nanovdb::HostBuffer>(path.string(), gridname);
     grid = handle.grid<float>();
     if (!grid || !grid->isValid() || !grid->isFogVolume())
         throw std::runtime_error("Empty or invalid NanoVDB grid!");

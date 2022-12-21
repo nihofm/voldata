@@ -11,8 +11,6 @@ namespace fs = std::filesystem;
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/string_cast.hpp>
 
-// #include <openvdb/tools/GridTransformer.h>
-
 namespace voldata {
 
 Volume::Volume() : grid_frame_counter(0), model(glm::mat4(1)), albedo(1), phase(0.0), density_scale(1.0), emission_scale(1.0) {}
@@ -79,9 +77,11 @@ Volume::BrickGridPtr Volume::current_grid_brick(const std::string& gridname) con
     return to_brick_grid(current_grid(gridname));
 }
 
+#ifdef VOLDATA_WITH_OPENVDB
 Volume::OpenVDBGridPtr Volume::current_grid_vdb(const std::string& gridname) const {
     return to_vdb_grid(current_grid(gridname));
 }
+#endif
 
 Volume::NanoVDBGridPtr Volume::current_grid_nvdb(const std::string& gridname) const {
     return to_nvdb_grid(current_grid(gridname));
@@ -118,7 +118,8 @@ std::string Volume::to_string(const std::string& indent) const {
     out << indent << "AABB: " << glm::to_string(bb_min) << " / " << glm::to_string(bb_max) << std::endl;
     out << indent << "modelmatrix: " << glm::to_string(model) << std::endl;
     out << indent << "current grid frame: " << grid_frame_counter << " / " << grids.size() << std::endl;
-    out << indent << "current grid: " << current_grid()->to_string(indent + "  ") << std::endl;
+    out << indent << "current grid: " << std::endl;
+    out << indent << current_grid()->to_string("\t") << std::endl;
     out << indent << "albedo: " << glm::to_string(albedo) << std::endl;
     out << indent << "phase: " << phase << std::endl;
     out << indent << "density scale: " << density_scale;
@@ -200,10 +201,12 @@ Volume::GridPtr Volume::load_grid(const std::string& filename, const std::string
         grid->transform = glm::scale(glm::rotate(glm::mat4(1), float(1.5 * M_PI), glm::vec3(1, 0, 0)), slice_thickness);
         return grid;
     }
+#ifdef VOLDATA_WITH_OPENVDB
     // handle OpenVDB files
     else if (extension == ".vdb") {
         return std::make_shared<OpenVDBGrid>(path, gridname);
     }
+#endif
     // handle NanoVDB files
     else if (extension == ".nvdb") {
         return std::make_shared<NanoVDBGrid>(path, gridname);
@@ -251,11 +254,13 @@ Volume::BrickGridPtr Volume::to_brick_grid(const GridPtr& grid) {
     return brick;
 }
 
+#ifdef VOLDATA_WITH_OPENVDB
 Volume::OpenVDBGridPtr Volume::to_vdb_grid(const GridPtr& grid) {
     auto vdb = std::dynamic_pointer_cast<OpenVDBGrid>(grid); // check type
     if (!vdb) vdb = std::make_shared<OpenVDBGrid>(grid); // type not matching, convert grid
     return vdb;
 }
+#endif
 
 Volume::NanoVDBGridPtr Volume::to_nvdb_grid(const GridPtr& grid) {
     auto nvdb = std::dynamic_pointer_cast<NanoVDBGrid>(grid); // check type

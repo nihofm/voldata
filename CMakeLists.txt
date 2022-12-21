@@ -9,26 +9,13 @@ PROJECT(voldata
 # ---------------------------------------------------------------------
 # options
 
-option(VOLDATA_BUILD_GLM ON)
-option(VOLDATA_BUILD_OPENVDB ON)
-option(VOLDATA_BUILD_TOOLS OFF)
-
-# ---------------------------------------------------------------------
-# compiler setup
-
-if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-	message(STATUS "No release type specified. Setting to 'Release'.")
-	set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
-	set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "RelWithDebInfo")
-endif()
-
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+option(VOLDATA_BUILD_GLM "" ON)
+option(VOLDATA_BUILD_TOOLS "" OFF)
 
 # ---------------------------------------------------------------------
 # dependencies
+
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 include_directories(submodules)
 
@@ -38,26 +25,40 @@ if (VOLDATA_BUILD_GLM)
     include_directories(submodules/glm)
 endif()
 
+# imebra
+set(IMEBRA_SHARED_STATIC STATIC)
+add_subdirectory(submodules/imebra)
+include_directories(submodules/imebra/library/include)
+
 # cereal
 include_directories(submodules/cereal/include)
 
 # openvdb
-if (VOLDATA_BUILD_OPENVDB)
-    set(OPENVDB_BUILD_BINARIES OFF CACHE BOOL "" FORCE)
-    set(OPENVDB_ENABLE_UNINSTALL OFF CACHE BOOL "" FORCE)
-    set(OPENVDB_CORE_SHARED OFF CACHE BOOL "" FORCE)
-    set(OPENVDB_CORE_STATIC ON CACHE BOOL "" FORCE)
-    add_subdirectory(submodules/openvdb)
-    include_directories(submodules/openvdb)
+find_package(OpenVDB QUIET)
+if (OpenVDB_FOUND)
+    message(STATUS "Found OpenVDB version: ${OpenVDB_VERSION}, compiling with OpenVDB support...")
+    set(VOLDATA_WITH_OPENVDB ON)
+    add_definitions(-DVOLDATA_WITH_OPENVDB)
+    include_directories(${OpenVDB_INCLUDE_DIRS})
+else()
+    message(STATUS "OpenVDB NOT found, compiling without OpenVDB support...")
+    add_definitions(-UVOLDATA_WITH_OPENVDB)
 endif()
 
 # nanovdb
 include_directories(submodules/openvdb/nanovdb)
 
-# imebra
-set(IMEBRA_SHARED_STATIC STATIC CACHE BOOL "" FORCE)
-add_subdirectory(submodules/imebra)
-include_directories(submodules/imebra/library/include)
+# ---------------------------------------------------------------------
+# compiler setup
+
+if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+	message(STATUS "No release type specified. Setting to 'Release'.")
+	set(CMAKE_BUILD_TYPE Release)
+	set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "RelWithDebInfo")
+endif()
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # ---------------------------------------------------------------------
 # directory management

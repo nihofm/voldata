@@ -6,9 +6,12 @@
 #include <voldata/grid_vdb.h>
 #include <voldata/grid_nvdb.h>
 
-#include <vector>
-#include <string>
 #include <glm/glm.hpp>
+
+#include <map>
+#include <vector>
+#include <memory>
+#include <string>
 
 namespace voldata {
 
@@ -16,7 +19,9 @@ class Volume {
     using GridPtr = std::shared_ptr<Grid>;
     using DenseGridPtr = std::shared_ptr<DenseGrid>;
     using BrickGridPtr = std::shared_ptr<BrickGrid>;
+#ifdef VOLDATA_WITH_OPENVDB
     using OpenVDBGridPtr = std::shared_ptr<OpenVDBGrid>;
+#endif
     using NanoVDBGridPtr = std::shared_ptr<NanoVDBGrid>;
     using GridFrame = std::map<std::string, GridPtr>;
     using VolumePtr = std::shared_ptr<Volume>;
@@ -41,7 +46,9 @@ public:
     GridPtr current_grid(const std::string& gridname = "density") const;                        // return grid from current frame
     DenseGridPtr current_grid_dense(const std::string& gridname = "density") const;             // return grid from current frame as BrickGrid, convert if necessary
     BrickGridPtr current_grid_brick(const std::string& gridname = "density") const;             // return grid from current frame as BrickGrid, convert if necessary
+#ifdef VOLDATA_WITH_OPENVDB
     OpenVDBGridPtr current_grid_vdb(const std::string& gridname = "density") const;             // return grid from current frame as OpenVDBGrid, convert if necessary
+#endif
     NanoVDBGridPtr current_grid_nvdb(const std::string& gridname = "density") const;             // return grid from current frame as NanoVDBGrid, convert if necessary
 
     // transformation, AABB (world space) and extrema of the current grid
@@ -57,7 +64,9 @@ public:
     static GridPtr load_grid(const std::string& filename, const std::string& gridname = "density");
     static DenseGridPtr to_dense_grid(const GridPtr& grid);
     static BrickGridPtr to_brick_grid(const GridPtr& grid);
+#ifdef VOLDATA_WITH_OPENVDB
     static OpenVDBGridPtr to_vdb_grid(const GridPtr& grid);
+#endif
     static NanoVDBGridPtr to_nvdb_grid(const GridPtr& grid);
     static VolumePtr load_folder(const std::string& path, std::vector<std::string> gridnames = { "density" });
 
