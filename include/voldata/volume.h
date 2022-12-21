@@ -51,6 +51,7 @@ public:
     std::pair<glm::vec3, glm::vec3> AABB(const std::string& gridname = "density") const;        // world-space AABB
     std::pair<float, float> minorant_majorant(const std::string& gridname = "density") const;   // minimum and maximal density values in the current grid
     std::string to_string(const std::string& indent="") const;                                  // string representation
+    void scale_and_move_to_unit_cube();                                                         // scale and move volume to fit into [-0.5, 0.5] unit cube
 
     // static grid management helpers
     static GridPtr load_grid(const std::string& filename, const std::string& gridname = "density");

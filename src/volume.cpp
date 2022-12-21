@@ -125,6 +125,21 @@ std::string Volume::to_string(const std::string& indent) const {
     return out.str();
 }
 
+void Volume::scale_and_move_to_unit_cube() {
+    // compute max AABB over whole volume (animation)
+    glm::vec3 bb_min = glm::vec3(FLT_MAX), bb_max = glm::vec3(FLT_MIN);
+    for (const auto frame : grids) {
+        const auto grid = frame.at("density");
+        bb_min = glm::min(bb_min, glm::vec3(grid->transform * glm::vec4(0, 0, 0, 1)));
+        bb_max = glm::max(bb_max, glm::vec3(grid->transform * glm::vec4(glm::vec3(grid->index_extent()), 1)));
+    }
+    // scale to unit cube and move to origin
+    const glm::vec3 extent = bb_max - bb_min;
+    const float size = fmaxf(extent.x, fmaxf(extent.y, extent.z));
+    model = glm::translate(glm::scale(glm::mat4(1), glm::vec3(1.f / size)), -bb_min - 0.5f * extent);
+    density_scale = size;
+}
+
 Volume::GridPtr Volume::load_grid(const std::string& filename, const std::string& gridname) {
     fs::path path = filename;
     std::string extension = path.extension().string();
