@@ -46,7 +46,9 @@ include_directories(submodules/imebra/library/include)
 include_directories(submodules/cereal/include)
 
 # openvdb
-find_package(OpenVDB QUIET)
+
+list(APPEND CMAKE_MODULE_PATH "/usr/local/lib/cmake/OpenVDB") # support default non-standard OpenVDB install location
+find_package(OpenVDB)
 if (OpenVDB_FOUND)
     message(STATUS "Found OpenVDB version: ${OpenVDB_VERSION}, compiling with OpenVDB support...")
     set(VOLDATA_WITH_OPENVDB ON)
