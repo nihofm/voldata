@@ -16,6 +16,7 @@
 namespace voldata {
 
 class Volume {
+public:
     using GridPtr = std::shared_ptr<Grid>;
     using DenseGridPtr = std::shared_ptr<DenseGrid>;
     using BrickGridPtr = std::shared_ptr<BrickGrid>;
@@ -26,7 +27,6 @@ class Volume {
     using GridFrame = std::map<std::string, GridPtr>;
     using VolumePtr = std::shared_ptr<Volume>;
 
-public:
     Volume();
     Volume(const GridPtr& grid, const std::string& gridname = "density");
     Volume(const std::string& filename, const std::string& gridname = "density");
