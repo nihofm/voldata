@@ -262,6 +262,9 @@ std::shared_ptr<handlers::readingDataHandler> buffer::getReadingDataHandler(tagV
     case tagVR_t::OL:
         return std::make_shared<handlers::readingDataHandlerNumeric<std::int32_t> >(localMemory, tagVR);
 
+    case tagVR_t::OV:
+        return std::make_shared<handlers::readingDataHandlerNumeric<std::uint64_t> >(localMemory, tagVR);
+
     case tagVR_t::SB:
         return std::make_shared<handlers::readingDataHandlerNumeric<std::int8_t> >(localMemory, tagVR);
 
@@ -289,11 +292,17 @@ std::shared_ptr<handlers::readingDataHandler> buffer::getReadingDataHandler(tagV
     case tagVR_t::SL:
         return std::make_shared<handlers::readingDataHandlerNumeric<std::int32_t> >(localMemory, tagVR);
 
+    case tagVR_t::SV:
+        return std::make_shared<handlers::readingDataHandlerNumeric<std::int64_t> >(localMemory, tagVR);
+
     case tagVR_t::SS:
         return std::make_shared<handlers::readingDataHandlerNumeric<std::int16_t> >(localMemory, tagVR);
 
     case tagVR_t::UL:
         return std::make_shared<handlers::readingDataHandlerNumeric<std::uint32_t> >(localMemory, tagVR);
+
+    case tagVR_t::UV:
+        return std::make_shared<handlers::readingDataHandlerNumeric<std::uint64_t> >(localMemory, tagVR);
 
     case tagVR_t::US:
         return std::make_shared<handlers::readingDataHandlerNumeric<std::uint16_t> >(localMemory, tagVR);
@@ -377,6 +386,9 @@ std::shared_ptr<handlers::writingDataHandler> buffer::getWritingDataHandler(tagV
     case tagVR_t::OL:
         return std::make_shared<handlers::writingDataHandlerNumeric<std::int32_t> >(shared_from_this(), size, tagVR);
 
+    case tagVR_t::OV:
+        return std::make_shared<handlers::writingDataHandlerNumeric<std::uint64_t> >(shared_from_this(), size, tagVR);
+
     case tagVR_t::SB:
         return std::make_shared<handlers::writingDataHandlerNumeric<std::int8_t> >(shared_from_this(), size, tagVR);
 
@@ -404,11 +416,17 @@ std::shared_ptr<handlers::writingDataHandler> buffer::getWritingDataHandler(tagV
     case tagVR_t::SL:
         return std::make_shared<handlers::writingDataHandlerNumeric<std::int32_t> >(shared_from_this(), size, tagVR);
 
+    case tagVR_t::SV:
+        return std::make_shared<handlers::writingDataHandlerNumeric<std::int64_t> >(shared_from_this(), size, tagVR);
+
     case tagVR_t::SS:
         return std::make_shared<handlers::writingDataHandlerNumeric<std::int16_t> >(shared_from_this(), size, tagVR);
 
     case tagVR_t::UL:
         return std::make_shared<handlers::writingDataHandlerNumeric<std::uint32_t> >(shared_from_this(), size, tagVR);
+
+    case tagVR_t::UV:
+        return std::make_shared<handlers::writingDataHandlerNumeric<std::uint64_t> >(shared_from_this(), size, tagVR);
 
     case tagVR_t::US:
         return std::make_shared<handlers::writingDataHandlerNumeric<std::uint16_t> >(shared_from_this(), size, tagVR);

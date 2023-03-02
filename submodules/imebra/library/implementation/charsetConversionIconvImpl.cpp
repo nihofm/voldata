@@ -35,13 +35,11 @@ namespace imebra
 // Constructor
 //
 ///////////////////////////////////////////////////////////
-charsetConversionIconv::charsetConversionIconv(const std::string& dicomName)
+charsetConversionIconv::charsetConversionIconv(const charsetInformation& charsetInformation)
 {
     IMEBRA_FUNCTION_START();
 
-    const charsetInformation& info(getDictionary().getCharsetInformation(dicomName));
-
-    std::string toCodeIgnore(info.m_isoRegistration);
+    std::string toCodeIgnore(charsetInformation.m_isoRegistration);
     toCodeIgnore += "//IGNORE";
 
     // Check little endian/big endian
@@ -58,11 +56,11 @@ charsetConversionIconv::charsetConversionIconv(const std::string& dicomName)
         utfCode = (*((std::uint8_t*)&m_endianCheck) == 0xff) ? "UTF-32LE" : "UTF-32BE";
     }
 
-    m_iconvToUnicode = iconv_open(utfCode, info.m_isoRegistration.c_str());
+    m_iconvToUnicode = iconv_open(utfCode, charsetInformation.m_isoRegistration.c_str());
     m_iconvFromUnicode = iconv_open(toCodeIgnore.c_str(), utfCode);
     if(m_iconvToUnicode == (iconv_t)-1 || m_iconvFromUnicode == (iconv_t)-1)
     {
-        IMEBRA_THROW(CharsetConversionNoSupportedTableError, "Table " << dicomName << " not supported by the system");
+        IMEBRA_THROW(CharsetConversionNoSupportedTableError, "Table " << charsetInformation.m_isoRegistration << " for DICOM charset " << charsetInformation.m_dicomName << " not supported by the system");
     }
 
     IMEBRA_FUNCTION_END();
@@ -136,42 +134,39 @@ std::string charsetConversionIconv::myIconv(iconv_t context, char* inputString, 
 {
     IMEBRA_FUNCTION_START();
 
-    std::string finalString;
-
     // Reset the state
     ///////////////////////////////////////////////////////////
-    iconv(context, 0, 0, 0, 0);
+    iconv(context, nullptr, nullptr, nullptr, nullptr);
+
+    std::string finalString;
 
     // Buffer for the conversion
     ///////////////////////////////////////////////////////////
-    //char conversionBuffer[1024];
-    std::array<char, 1024> conversionBuffer;
+    std::array<char, 1024> conversionBuffer({});
 
     // Convert the string
     ///////////////////////////////////////////////////////////
-    for(size_t iconvReturn = (size_t)-1; iconvReturn == (size_t)-1;)
+    for(;;)
     {
         // Executes the conversion
         ///////////////////////////////////////////////////////////
         size_t progressiveOutputBufferSize = conversionBuffer.size();
         char* progressiveOutputBuffer(conversionBuffer.data());
-        iconvReturn = iconv(context, &inputString, &inputStringLengthBytes, &progressiveOutputBuffer, &progressiveOutputBufferSize);
+        size_t iconvReturn = iconv(context, &inputString, &inputStringLengthBytes, &progressiveOutputBuffer, &progressiveOutputBufferSize);
 
-        // Update buffer's size
-        ///////////////////////////////////////////////////////////
-        size_t outputLengthBytes = conversionBuffer.size() - progressiveOutputBufferSize;
-
-        finalString.append(conversionBuffer.data(), outputLengthBytes);
-
-        // Throw if an invalid sequence is found
-        ///////////////////////////////////////////////////////////
-        if(iconvReturn == (size_t)-1 && errno != E2BIG)
+        if(iconvReturn == static_cast<size_t>(-1) && errno != E2BIG)
         {
             return std::string();
         }
-    }
 
-    return finalString;
+        size_t outputLengthBytes = conversionBuffer.size() - progressiveOutputBufferSize;
+        finalString.append(conversionBuffer.data(), outputLengthBytes);
+
+        if(iconvReturn != static_cast<size_t>(-1))
+        {
+            return finalString;
+        }
+    }
 
     IMEBRA_FUNCTION_END();
 }

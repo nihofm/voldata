@@ -20,24 +20,24 @@ set(imebra_libraries "")
 
 # Select the proper charset conversion libraries according to the charset conversion method
 #------------------------------------------------------------------------------------------
-if(IMEBRA_CHARSET_CONVERSION MATCHES ICONV)
+if("*${IMEBRA_CHARSET_CONVERSION}*" STREQUAL "*ICONV*")
     message("Using ICONV")
     add_definitions(-DIMEBRA_USE_ICONV)
     if(APPLE)
         set(imebra_libraries ${imebra_libraries} iconv)
     endif(APPLE)
-elseif(IMEBRA_CHARSET_CONVERSION MATCHES ICU)
+elseif("*${IMEBRA_CHARSET_CONVERSION}*" STREQUAL "*ICU*")
     message("Using ICU")
     add_definitions(-DIMEBRA_USE_ICU)
     set(imebra_libraries ${imebra_libraries} icuuc)
     set(imebra_libraries ${imebra_libraries} icuio)
-elseif(IMEBRA_CHARSET_CONVERSION MATCHES JAVA)
+elseif("*${IMEBRA_CHARSET_CONVERSION}*" STREQUAL "*JAVA*")
     message("Using JAVA")
     add_definitions(-DIMEBRA_USE_JAVA)
-elseif(IMEBRA_CHARSET_CONVERSION MATCHES WINDOWS)
+elseif("*${IMEBRA_CHARSET_CONVERSION}*" STREQUAL "*WINDOWS*")
     message("Using WINDOWS CHARSET CONVERSION")
     add_definitions(-DIMEBRA_USE_WINDOWS_CHARSET)
-else(IMEBRA_CHARSET_CONVERSION MATCHES ICONV)
+else()
     if(WIN32)
         message("Using WINDOWS CHARSET CONVERSION (default)")
         add_definitions(-DIMEBRA_USE_WINDOWS_CHARSET)
@@ -48,7 +48,7 @@ else(IMEBRA_CHARSET_CONVERSION MATCHES ICONV)
             set(imebra_libraries ${imebra_libraries} iconv)
         endif(APPLE)
     endif(WIN32)
-endif(IMEBRA_CHARSET_CONVERSION MATCHES ICONV)
+endif()
 
 # Set the proper logging preprocessor macros
 #-------------------------------------------
@@ -188,7 +188,7 @@ endif("${IMEBRA_OBJC}" STREQUAL "1")
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 
     message(STATUS "MSVC detected, adding compile flags")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /bigobj")
     set(imebra_libraries ${imebra_libraries} Kernel32)
 
 else()
@@ -333,6 +333,7 @@ if(IMEBRA_LOG_FRAMEWORK MATCHES LOG4CXX)
 else()
     add_test(RunImebraTests ImebraTests --corruptedFilesFolder=${CMAKE_CURRENT_SOURCE_DIR}/tests/corruptedfiles)
 endif()
+
 
     ##############################################
     #

@@ -6,8 +6,8 @@ Imebra is available for free under the GNU General Public License.
 The full text of the license is available in the file license.rst
  in the project root folder.
 
-If you do not want to be bound by the GPL terms (such as the requirement 
- that your application must also be GPL), you may purchase a commercial 
+If you do not want to be bound by the GPL terms (such as the requirement
+ that your application must also be GPL), you may purchase a commercial
  license for Imebra from the Imebra’s website (http://imebra.com).
 */
 
@@ -32,22 +32,21 @@ namespace imebra
 // Constructor
 //
 ///////////////////////////////////////////////////////////
-charsetConversionICU::charsetConversionICU(const std::string& dicomName)
+charsetConversionICU::charsetConversionICU(const charsetInformation& charsetInformation)
 {
     IMEBRA_FUNCTION_START();
 
     UErrorCode errorCode(U_ZERO_ERROR);
-    const charsetInformation& info = getDictionary().getCharsetInformation(dicomName);
 
-    m_pIcuConverter = ucnv_open(info.m_isoRegistration.c_str(), &errorCode);
+    m_pIcuConverter = ucnv_open(charsetInformation.m_isoRegistration.c_str(), &errorCode);
     if(U_FAILURE(errorCode))
     {
-        IMEBRA_THROW(CharsetConversionNoSupportedTableError, "ICU library returned error " << errorCode << " for table " << dicomName);
+        IMEBRA_THROW(CharsetConversionNoSupportedTableError, "ICU library returned error " << errorCode << " for table " << charsetInformation.m_isoRegistration);
     }
     ucnv_setSubstChars(m_pIcuConverter, "?", 1, &errorCode);
     if(U_FAILURE(errorCode))
     {
-        IMEBRA_THROW(CharsetConversionNoSupportedTableError, "ICU library returned error " << errorCode << " while setting the substitution char for table " << dicomName);
+        IMEBRA_THROW(CharsetConversionNoSupportedTableError, "ICU library returned error " << errorCode << " while setting the substitution char for table " << charsetInformation.m_isoRegistration);
     }
 
     IMEBRA_FUNCTION_END();
@@ -75,10 +74,10 @@ std::string charsetConversionICU::fromUnicode(const std::wstring& unicodeString)
 {
     IMEBRA_FUNCTION_START();
 
-	if(unicodeString.empty())
-	{
-		return std::string();
-	}
+    if(unicodeString.empty())
+    {
+        return std::string();
+    }
 
     UnicodeString unicodeStringConversion;
     switch(sizeof(wchar_t))
@@ -105,7 +104,7 @@ std::string charsetConversionICU::fromUnicode(const std::wstring& unicodeString)
     }
     return returnString;
 
-	IMEBRA_FUNCTION_END();
+    IMEBRA_FUNCTION_END();
 }
 
 
@@ -118,32 +117,27 @@ std::wstring charsetConversionICU::toUnicode(const std::string& asciiString) con
 {
     IMEBRA_FUNCTION_START();
 
-	if(asciiString.empty())
-	{
-		return std::wstring();
-	}
+    if(asciiString.empty())
+    {
+        return std::wstring();
+    }
 
     UErrorCode errorCode(U_ZERO_ERROR);
     UnicodeString unicodeString(&(asciiString[0]), (std::int32_t)asciiString.size(), m_pIcuConverter, errorCode);
-    switch(sizeof(wchar_t))
-    {
-    case 2:
+    if(sizeof(wchar_t) == 2)
     {
         std::wstring returnString((size_t)unicodeString.length(), wchar_t(0));
         unicodeString.extract((UChar*)&(returnString[0]), unicodeString.length(), errorCode);
         return returnString;
     }
-    case 4:
-    {
-        int32_t conversionLength = unicodeString.toUTF32((UChar32*)0, (int32_t)0, errorCode);
-        errorCode = U_ZERO_ERROR;
-        std::wstring returnString((size_t)conversionLength, wchar_t(0));
-        unicodeString.toUTF32((UChar32*)&(returnString[0]), conversionLength, errorCode);
-        return returnString;
-    }
-    }
 
-	IMEBRA_FUNCTION_END();
+    int32_t conversionLength = unicodeString.toUTF32((UChar32*)0, (int32_t)0, errorCode);
+    errorCode = U_ZERO_ERROR;
+    std::wstring returnString((size_t)conversionLength, wchar_t(0));
+    unicodeString.toUTF32((UChar32*)&(returnString[0]), conversionLength, errorCode);
+    return returnString;
+
+    IMEBRA_FUNCTION_END();
 }
 
 

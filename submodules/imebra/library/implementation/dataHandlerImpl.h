@@ -77,6 +77,34 @@ public:
 
     /// \brief Retrieve the buffer's element referenced by the
     ///         zero-based index specified in the parameter and
+    ///         returns it as a signed 64 bit integer value.
+    ///
+    /// @param index   the zero base index of the buffer's
+    ///                 element to retrieve
+    /// @return the value of the data element referenced by
+    ///          the index.
+    ///          Throws MissingItemError if the index
+    ///          is out of range.
+    ///
+    ///////////////////////////////////////////////////////////
+    virtual std::int64_t getInt64(const size_t index) const = 0;
+
+    /// \brief Retrieve the buffer's element referenced by the
+    ///         zero-based index specified in the parameter and
+    ///         returns it as an unsigned 64 bit integer value.
+    ///
+    /// @param index   the zero base index of the buffer's
+    ///                 element to retrieve
+    /// @return the value of the data element referenced by
+    ///          the index.
+    ///          Throws MissingItemError if the index
+    ///          is out of range.
+    ///
+    ///////////////////////////////////////////////////////////
+    virtual std::uint64_t getUint64(const size_t index) const = 0;
+
+    /// \brief Retrieve the buffer's element referenced by the
+    ///         zero-based index specified in the parameter and
     ///         returns it as a signed long value.
     ///
     /// @param index   the zero base index of the buffer's
@@ -304,6 +332,30 @@ public:
     ///
     ///////////////////////////////////////////////////////////
     virtual void setAge(const size_t index, const std::shared_ptr<const age>& pAge);
+
+    /// \brief Set the buffer's element referenced by the
+    ///         zero-based index specified in the parameter
+    ///         to a std::int64_t value.
+    ///
+    /// @param index   the zero base index of the buffer's
+    ///                 element to be set
+    /// @param value the value to write into the
+    ///				  %data element.
+    ///
+    ///////////////////////////////////////////////////////////
+    virtual void setInt64(const size_t index, const std::int64_t value) = 0;
+
+    /// \brief Set the buffer's element referenced by the
+    ///         zero-based index specified in the parameter
+    ///         to an std::uint64_t value.
+    ///
+    /// @param index   the zero base index of the buffer's
+    ///                 element to be set
+    /// @param value the value to write into the
+    ///				  %data element.
+    ///
+    ///////////////////////////////////////////////////////////
+    virtual void setUint64(const size_t index, const std::uint64_t value) = 0;
 
     /// \brief Set the buffer's element referenced by the
     ///         zero-based index specified in the parameter

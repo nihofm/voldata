@@ -6,8 +6,8 @@ Imebra is available for free under the GNU General Public License.
 The full text of the license is available in the file license.rst
  in the project root folder.
 
-If you do not want to be bound by the GPL terms (such as the requirement 
- that your application must also be GPL), you may purchase a commercial 
+If you do not want to be bound by the GPL terms (such as the requirement
+ that your application must also be GPL), you may purchase a commercial
  license for Imebra from the Imebra’s website (http://imebra.com).
 */
 
@@ -31,15 +31,15 @@ namespace imebra
 class charsetConversionWindows: public charsetConversionBase
 {
 public:
-    charsetConversionWindows(const std::string& dicomName);
+    charsetConversionWindows(const charsetInformation& charsetInformation);
 
     virtual std::string fromUnicode(const std::wstring& unicodeString) const override;
 
     virtual std::wstring toUnicode(const std::string& asciiString) const override;
 
 protected:
-	unsigned long m_codePage;
-	bool m_bZeroFlag;
+    unsigned long m_codePage;
+    bool m_bZeroFlag;
 };
 
 typedef charsetConversionWindows defaultCharsetConversion;

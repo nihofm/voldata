@@ -72,6 +72,8 @@ class Overlay;
 /// - getImage()
 /// - getImageApplyModalityTransform()
 /// - getSequenceItem()
+/// - getInt64()
+/// - getUInt64()
 /// - getInt32()
 /// - getUint32()
 /// - getInt16()
@@ -317,6 +319,21 @@ public:
     ///////////////////////////////////////////////////////////////////////////////
     bool bufferExists(const TagId& tagId, size_t bufferId) const;
 
+    /// \brief Retrieve a tag's value as signed long integer (64 bit).
+    ///
+    /// If the tag's value cannot be converted to a signed integer
+    /// then throws DataHandlerConversionError.
+    ///
+    /// If the value does not exist then throws MissingTagError or
+    ///  MissingGroupError or MissingBufferError or MissingItemError.
+    ///
+    /// \param tagId    the tag's id
+    /// \param elementNumber the element number within the buffer
+    /// \return the tag's value as a signed 32 bit integer
+    ///
+    ///////////////////////////////////////////////////////////////////////////////
+    std::int64_t getInt64(const TagId& tagId, size_t elementNumber) const;
+
     /// \brief Retrieve a tag's value as signed integer (32 bit).
     ///
     /// If the tag's value cannot be converted to a signed integer
@@ -336,6 +353,23 @@ public:
     ///
     ///////////////////////////////////////////////////////////////////////////////
     std::int32_t getSignedLong(const TagId& tagId, size_t elementNumber) const;
+
+    /// \brief Retrieve a tag's value as signed long integer (64 bit).
+    ///
+    /// If the tag's value cannot be converted to a signed integer
+    /// then throws DataHandlerConversionError.
+    ///
+    /// If the specified Tag does not exist or it does not contain the specified
+    /// buffer then returns the default value specified in the parameter.
+    ///
+    /// \param tagId         the tag's id
+    /// \param elementNumber the element number within the buffer
+    /// \param defaultValue  the value to return if the tag doesn't exist
+    /// \return the tag's value as a signed 32 bit integer, or defaultValue if
+    ///         the tag doesn't exist
+    ///
+    ///////////////////////////////////////////////////////////////////////////////
+    std::int64_t getInt64(const TagId& tagId, size_t elementNumber, std::int64_t defaultValue) const;
 
     /// \brief Retrieve a tag's value as signed integer (32 bit).
     ///
@@ -359,6 +393,21 @@ public:
     ///////////////////////////////////////////////////////////////////////////////
     std::int32_t getSignedLong(const TagId& tagId, size_t elementNumber, std::int32_t defaultValue) const;
 
+    /// \brief Retrieve a tag's value as unsigned long integer (64 bit).
+    ///
+    /// If the tag's value cannot be converted to an unsigned integer
+    /// then throws DataHandlerConversionError.
+    ///
+    /// If the value does not exist then throws MissingTagError or
+    ///  MissingGroupError or MissingBufferError or MissingItemError.
+    ///
+    /// \param tagId    the tag's id
+    /// \param elementNumber the element number within the buffer
+    /// \return the tag's value as an unsigned 32 bit integer
+    ///
+    ///////////////////////////////////////////////////////////////////////////////
+    std::uint64_t getUint64(const TagId& tagId, size_t elementNumber) const;
+
     /// \brief Retrieve a tag's value as unsigned integer (32 bit).
     ///
     /// When calling getUint32() on an AT tag (Attribute Tag) then the tag group
@@ -381,6 +430,23 @@ public:
     ///
     ///////////////////////////////////////////////////////////////////////////////
     std::uint32_t getUnsignedLong(const TagId& tagId, size_t elementNumber) const;
+
+    /// \brief Retrieve a tag's value as unsigned long integer (64 bit).
+    ///
+    /// If the tag's value cannot be converted to an unsigned integer
+    /// then throws DataHandlerConversionError.
+    ///
+    /// If the specified Tag does not exist then returns the default value
+    /// specified in the parameter.
+    ///
+    /// \param tagId         the tag's id
+    /// \param elementNumber the element number within the buffer
+    /// \param defaultValue  the value to return if the tag doesn't exist
+    /// \return the tag's value as an unsigned 32 bit integer, or defaultValue if
+    ///         the tag doesn't exist
+    ///
+    ///////////////////////////////////////////////////////////////////////////////
+    std::uint64_t getUint64(const TagId& tagId, size_t elementNumber, std::uint64_t defaultValue) const;
 
     /// \brief Retrieve a tag's value as unsigned integer (32 bit).
     ///
@@ -828,8 +894,9 @@ private:
 ///
 /// To set the DataSet's content, use one of the following methods:
 /// - setImage()
-/// - setSequenceItem()
-/// - setInt32()
+/// - appendSequenceItem()
+/// - setInt64()
+/// - setUInt64()
 /// - setUint32()
 /// - setInt16()
 /// - setUint16()
@@ -1115,6 +1182,19 @@ public:
     ///////////////////////////////////////////////////////////////////////////////
     WritingDataHandlerNumeric getWritingDataHandlerRaw(const TagId& tagId, size_t bufferId);
 
+    /// \brief Write a new signed 64 bit integer value into the element 0 of the
+    ///        specified Tag's buffer 0.
+    ///
+    /// If the specified Tag or buffer don't exist then a new tag is created
+    /// using the specified data type (VR).
+    ///
+    /// \param tagId    the tag's id
+    /// \param newValue the value to write into the tag
+    /// \param tagVR    the tag's type to use when a new tag is created.
+    ///
+    ///////////////////////////////////////////////////////////////////////////////
+    void setInt64(const TagId& tagId, std::int64_t newValue, tagVR_t tagVR);
+
     /// \brief Write a new signed 32 bit integer value into the element 0 of the
     ///        specified Tag's buffer 0.
     ///
@@ -1133,6 +1213,18 @@ public:
     ///////////////////////////////////////////////////////////////////////////////
     void setSignedLong(const TagId& tagId, std::int32_t newValue, tagVR_t tagVR);
 
+    /// \brief Write a new signed 64 bit integer value into the element 0 of the
+    ///        specified Tag's buffer 0.
+    ///
+    /// If the specified Tag does not exist then it creates a new tag with a
+    ///  default VR retrieved from the DicomDictionary.
+    ///
+    /// \param tagId    the tag's id
+    /// \param newValue the value to write into the tag
+    ///
+    ///////////////////////////////////////////////////////////////////////////////
+    void setInt64(const TagId& tagId, std::int64_t newValue);
+
     /// \brief Write a new signed 32 bit integer value into the element 0 of the
     ///        specified Tag's buffer 0.
     ///
@@ -1149,6 +1241,19 @@ public:
     ///
     ///////////////////////////////////////////////////////////////////////////////
     void setSignedLong(const TagId& tagId, std::int32_t newValue);
+
+    /// \brief Write a new unsigned 64 bit integer value into the element 0 of the
+    ///        specified Tag's buffer 0.
+    ///
+    /// If the specified Tag doesn't exist then a new tag is created using
+    /// the specified data type (VR).
+    ///
+    /// \param tagId    the tag's id
+    /// \param newValue the value to write into the tag
+    /// \param tagVR    the tag's type to use when a new tag is created.
+    ///
+    ///////////////////////////////////////////////////////////////////////////////
+    void setUint64(const TagId& tagId, std::uint64_t newValue, tagVR_t tagVR);
 
     /// \brief Write a new unsigned 32 bit integer value into the element 0 of the
     ///        specified Tag's buffer 0.
@@ -1170,6 +1275,18 @@ public:
     ///
     ///////////////////////////////////////////////////////////////////////////////
     void setUnsignedLong(const TagId& tagId, std::uint32_t newValue, tagVR_t tagVR);
+
+    /// \brief Write a new unsigned 64 bit integer value into the element 0 of the
+    ///        specified Tag's buffer 0.
+    ///
+    /// If the specified Tag does not exist then it creates a new tag with a
+    ///  default VR retrieved from the DicomDictionary.
+    ///
+    /// \param tagId    the tag's id
+    /// \param newValue the value to write into the tag
+    ///
+    ///////////////////////////////////////////////////////////////////////////////
+    void setUint64(const TagId& tagId, std::uint64_t newValue);
 
     /// \brief Write a new unsigned 32 bit integer value into the element 0 of the
     ///        specified Tag's buffer 0.

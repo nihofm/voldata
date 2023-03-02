@@ -413,6 +413,9 @@ std::uint8_t data::getPaddingByte() const
     case tagVR_t::OL:
         return 0x0;
 
+    case tagVR_t::OV:
+        return 0x0;
+
     case tagVR_t::SB:
         return 0x0;
 
@@ -440,10 +443,16 @@ std::uint8_t data::getPaddingByte() const
     case tagVR_t::SL:
         return 0x0;
 
+    case tagVR_t::SV:
+        return 0x0;
+
     case tagVR_t::SS:
         return 0x0;
 
     case tagVR_t::UL:
+        return 0x0;
+
+    case tagVR_t::UV:
         return 0x0;
 
     case tagVR_t::US:

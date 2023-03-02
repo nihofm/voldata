@@ -497,10 +497,19 @@ void tcpBaseSocket::poll(pollType_t pollType)
     {
         FD_SET(m_socket, &writeSockets);
     }
+    FD_SET(m_socket, &errorSockets);
     timeval timeout;
     timeout.tv_sec = IMEBRA_TCP_TIMEOUT_MS / 1000;
     timeout.tv_usec = (IMEBRA_TCP_TIMEOUT_MS - timeout.tv_sec * 1000) * 1000;
-    throwTcpException(::select(m_socket + 1, &readSockets, &writeSockets, &errorSockets, &timeout));
+    int numSockets = throwTcpException(::select(m_socket + 1, &readSockets, &writeSockets, &errorSockets, &timeout));
+    if(numSockets == 0)
+    {
+        IMEBRA_THROW(SocketTimeout, "Timed out");
+    }
+    if(FD_ISSET(m_socket, &errorSockets))
+    {
+        IMEBRA_THROW(StreamClosedError, "Stream closed");
+    }
 #else
     short flags = pollType == pollType_t::read ? POLLIN : POLLOUT;
     pollfd fds[1];
@@ -791,6 +800,7 @@ std::shared_ptr<tcpSequenceStream> tcpListener::waitForConnection()
         socklen_t sockaddrLen(sizeof(addr));
         try
         {
+            poll(pollType_t::read);
             int acceptedSocket = (int)throwTcpException(accept(m_socket, (sockaddr*)&addr, &sockaddrLen));
 
             std::shared_ptr<tcpAddress> pPeerAddress(std::make_shared<tcpAddress>(*((sockaddr*)&addr), sockaddrLen));

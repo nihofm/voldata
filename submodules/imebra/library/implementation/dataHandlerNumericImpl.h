@@ -65,6 +65,8 @@ public:
     virtual void copyTo(std::int16_t* pMemory, size_t memorySize) const = 0;
     virtual void copyTo(std::uint32_t* pMemory, size_t memorySize) const = 0;
     virtual void copyTo(std::int32_t* pMemory, size_t memorySize) const = 0;
+    virtual void copyTo(std::uint64_t* pMemory, size_t memorySize) const = 0;
+    virtual void copyTo(std::int64_t* pMemory, size_t memorySize) const = 0;
     virtual void copyTo(float* pMemory, size_t memorySize) const = 0;
     virtual void copyTo(double* pMemory, size_t memorySize) const = 0;
 
@@ -137,6 +139,8 @@ public:
     virtual void copyFrom(const std::int16_t* pMemory, size_t memorySize) = 0;
     virtual void copyFrom(const std::uint32_t* pMemory, size_t memorySize) = 0;
     virtual void copyFrom(const std::int32_t* pMemory, size_t memorySize) = 0;
+    virtual void copyFrom(const std::uint64_t* pMemory, size_t memorySize) = 0;
+    virtual void copyFrom(const std::int64_t* pMemory, size_t memorySize) = 0;
     virtual void copyFrom(const float* pMemory, size_t memorySize) = 0;
     virtual void copyFrom(const double* pMemory, size_t memorySize) = 0;
 
@@ -389,6 +393,28 @@ public:
         return static_cast<U>(temp);
     }
 
+    // Retrieve the data element as a signed long long
+    ///////////////////////////////////////////////////////////
+    virtual std::int64_t getInt64(const size_t index) const override
+    {
+        IMEBRA_FUNCTION_START();
+
+        return getValue<std::int64_t>(index);
+
+        IMEBRA_FUNCTION_END();
+    }
+
+    // Retrieve the data element an unsigned long
+    ///////////////////////////////////////////////////////////
+    virtual std::uint64_t getUint64(const size_t index) const override
+    {
+        IMEBRA_FUNCTION_START();
+
+        return getValue<std::uint64_t>(index);
+
+        IMEBRA_FUNCTION_END();
+    }
+
     // Retrieve the data element as a signed long
     ///////////////////////////////////////////////////////////
     virtual std::int32_t getInt32(const size_t index) const override
@@ -570,6 +596,24 @@ public:
     }
 
     virtual void copyTo(std::int32_t* pMemory, size_t memorySize) const override
+    {
+        IMEBRA_FUNCTION_START();
+
+        copyToMemory(pMemory, memorySize);
+
+        IMEBRA_FUNCTION_END();
+    }
+
+    virtual void copyTo(std::uint64_t* pMemory, size_t memorySize) const override
+    {
+        IMEBRA_FUNCTION_START();
+
+        copyToMemory(pMemory, memorySize);
+
+        IMEBRA_FUNCTION_END();
+    }
+
+    virtual void copyTo(std::int64_t* pMemory, size_t memorySize) const override
     {
         IMEBRA_FUNCTION_START();
 
@@ -970,6 +1014,28 @@ public:
         reinterpret_cast<dataHandlerType*>(m_pMemory->data())[index] = static_cast<dataHandlerType>(value);
     }
 
+    // Set the data element as a std::int64_t
+    ///////////////////////////////////////////////////////////
+    virtual void setInt64(const size_t index, const std::int64_t value) override
+    {
+        IMEBRA_FUNCTION_START();
+
+        setValue<std::int64_t>(index, value);
+
+        IMEBRA_FUNCTION_END();
+    }
+
+    // Set the data element as a std::uint64_t
+    ///////////////////////////////////////////////////////////
+    virtual void setUint64(const size_t index, const std::uint64_t value) override
+    {
+        IMEBRA_FUNCTION_START();
+
+        setValue<std::uint64_t>(index, value);
+
+        IMEBRA_FUNCTION_END();
+    }
+
     // Set the data element as a std::int32_t
     ///////////////////////////////////////////////////////////
     virtual void setInt32(const size_t index, const std::int32_t value) override
@@ -1065,8 +1131,8 @@ public:
     {
         try
         {
-            long long numericValue(std::stoll(value));
-            setValue<long long>(index, numericValue);
+            std::int64_t numericValue(std::stoll(value));
+            setValue<std::int64_t>(index, numericValue);
         }
         catch (const std::out_of_range& )
         {
@@ -1085,8 +1151,8 @@ public:
     {
         try
         {
-            unsigned long long numericValue(std::stoull(value));
-            setValue<unsigned long long>(index, numericValue);
+            std::uint64_t numericValue(std::stoull(value));
+            setValue<std::uint64_t>(index, numericValue);
         }
         catch (const std::out_of_range& )
         {
@@ -1184,6 +1250,24 @@ public:
     }
 
     virtual void copyFrom(const std::int32_t* pMemory, size_t memorySize) override
+    {
+        IMEBRA_FUNCTION_START();
+
+        copyFromMemory(pMemory, memorySize);
+
+        IMEBRA_FUNCTION_END();
+    }
+
+    virtual void copyFrom(const std::uint64_t* pMemory, size_t memorySize) override
+    {
+        IMEBRA_FUNCTION_START();
+
+        copyFromMemory(pMemory, memorySize);
+
+        IMEBRA_FUNCTION_END();
+    }
+
+    virtual void copyFrom(const std::int64_t* pMemory, size_t memorySize) override
     {
         IMEBRA_FUNCTION_START();
 
@@ -1473,6 +1557,10 @@ class readingDataHandlerAT: public readingDataHandlerNumeric<std::uint32_t>
 public:
     using readingDataHandlerNumeric<std::uint32_t>::readingDataHandlerNumeric;
 
+    virtual std::uint64_t getUint64(const size_t index) const override;
+
+    virtual std::int64_t getInt64(const size_t index) const override;
+
     virtual std::uint32_t getUint32(const size_t index) const override;
 
     virtual std::int32_t getInt32(const size_t index) const override;
@@ -1495,6 +1583,10 @@ class writingDataHandlerAT: public writingDataHandlerNumeric<std::uint32_t>
 {
 public:
     using writingDataHandlerNumeric<std::uint32_t>::writingDataHandlerNumeric;
+
+    virtual void setUint64(const size_t index, const std::uint64_t value) override;
+
+    virtual void setInt64(const size_t index, const std::int64_t value) override;
 
     virtual void setUint32(const size_t index, const std::uint32_t value) override;
 
@@ -1521,6 +1613,8 @@ typedef readingDataHandlerNumeric<std::uint16_t> readingDataHandlerUint16;
 typedef readingDataHandlerNumeric<std::int16_t> readingDataHandlerInt16;
 typedef readingDataHandlerNumeric<std::uint32_t> readingDataHandlerUint32;
 typedef readingDataHandlerNumeric<std::int32_t> readingDataHandlerInt32;
+typedef readingDataHandlerNumeric<std::uint64_t> readingDataHandlerUint64;
+typedef readingDataHandlerNumeric<std::int64_t> readingDataHandlerInt64;
 typedef readingDataHandlerNumeric<float> readingDataHandlerFloat;
 typedef readingDataHandlerNumeric<double> readingDataHandlerDouble;
 
@@ -1531,6 +1625,8 @@ typedef writingDataHandlerNumeric<std::uint16_t> writingDataHandlerUint16;
 typedef writingDataHandlerNumeric<std::int16_t> writingDataHandlerInt16;
 typedef writingDataHandlerNumeric<std::uint32_t> writingDataHandlerUint32;
 typedef writingDataHandlerNumeric<std::int32_t> writingDataHandlerInt32;
+typedef writingDataHandlerNumeric<std::uint64_t> writingDataHandlerUint64;
+typedef writingDataHandlerNumeric<std::int64_t> writingDataHandlerInt64;
 typedef writingDataHandlerNumeric<float> writingDataHandlerFloat;
 typedef writingDataHandlerNumeric<double> writingDataHandlerDouble;
 

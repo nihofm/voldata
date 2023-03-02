@@ -35,8 +35,9 @@ std::string dicomConversion::convertFromUnicode(const std::wstring& unicodeStrin
     ///////////////////////////////////////////////////////////
     if(charsets.empty())
     {
-        std::unique_ptr<defaultCharsetConversion> localCharsetConversion(new defaultCharsetConversion("ISO_IR 6"));
-        std::string returnString =  localCharsetConversion->fromUnicode(unicodeString);
+        const charsetInformation info = defaultCharsetConversion::getDictionary().getCharsetInformation("ISO_IR 6", 0);
+        defaultCharsetConversion localCharsetConversion(info);
+        std::string returnString =  localCharsetConversion.fromUnicode(unicodeString);
         if(returnString.empty())
         {
             IMEBRA_THROW(CharsetConversionCannotConvert, "Cannot convert from unicode using only the charset 'ISO_IR 6'");
@@ -46,7 +47,8 @@ std::string dicomConversion::convertFromUnicode(const std::wstring& unicodeStrin
 
     // Setup the conversion objects
     ///////////////////////////////////////////////////////////
-    std::unique_ptr<defaultCharsetConversion> localCharsetConversion(new defaultCharsetConversion(charsets.front()));
+    const charsetInformation startingInfo = defaultCharsetConversion::getDictionary().getCharsetInformation(charsets.front(), 0);
+    std::unique_ptr<defaultCharsetConversion> localCharsetConversion(new defaultCharsetConversion(startingInfo));
 
     // Returned string
     ///////////////////////////////////////////////////////////
@@ -96,21 +98,25 @@ std::string dicomConversion::convertFromUnicode(const std::wstring& unicodeStrin
         std::string convertedSequence;
         for(const std::string& dicomCharset: charsets)
         {
-            try
+            for(size_t variant(0); variant != 2; ++ variant)
             {
-                std::unique_ptr<defaultCharsetConversion> testEscapeSequence(new defaultCharsetConversion(dicomCharset));
-                std::string convertedChar(testEscapeSequence->fromUnicode(code));
-                if(!convertedChar.empty())
+                try
                 {
-                    convertedSequence = testEscapeSequence->getDictionary().getCharsetInformation(dicomCharset).m_escapeSequence;
-                    convertedSequence += convertedChar;
-                    localCharsetConversion.reset(testEscapeSequence.release());
-                    break;
+                    const charsetInformation info = defaultCharsetConversion::getDictionary().getCharsetInformation(dicomCharset, variant);
+                    std::unique_ptr<defaultCharsetConversion> testEscapeSequence(new defaultCharsetConversion(info));
+                    std::string convertedChar(testEscapeSequence->fromUnicode(code));
+                    if(!convertedChar.empty())
+                    {
+                        convertedSequence = info.m_escapeSequence;
+                        convertedSequence += convertedChar;
+                        localCharsetConversion.reset(testEscapeSequence.release());
+                        break;
+                    }
                 }
-            }
-            catch(CharsetConversionNoSupportedTableError)
-            {
-                continue;
+                catch(CharsetConversionNoSupportedTableError)
+                {
+                    continue;
+                }
             }
         }
         if(convertedSequence.empty())
@@ -144,14 +150,16 @@ std::wstring dicomConversion::convertToUnicode(const std::string& value, const c
     ///////////////////////////////////////////////////////////
     if(charsets.empty())
     {
-        std::unique_ptr<defaultCharsetConversion> localCharsetConversion(new defaultCharsetConversion("ISO_IR 6"));
-        return localCharsetConversion->toUnicode(value);
+        const charsetInformation info = defaultCharsetConversion::getDictionary().getCharsetInformation("ISO_IR 6", 0);
+        defaultCharsetConversion localCharsetConversion(info);
+        return localCharsetConversion.toUnicode(value);
     }
 
     // Initialize the conversion engine with the default
     //  charset
     ///////////////////////////////////////////////////////////
-    std::unique_ptr<defaultCharsetConversion> localCharsetConversion(new defaultCharsetConversion(charsets.front()));
+    const charsetInformation startingInfo = defaultCharsetConversion::getDictionary().getCharsetInformation(charsets.front(), 0);
+    std::unique_ptr<defaultCharsetConversion> localCharsetConversion(new defaultCharsetConversion(startingInfo));
 
     // Only one charset is present: we don't need to check
     //  the escape sequences
@@ -169,13 +177,13 @@ std::wstring dicomConversion::convertToUnicode(const std::string& value, const c
     // Get the escape sequences from the unicode conversion
     //  engine
     ///////////////////////////////////////////////////////////
-    const charsetDictionary::escapeSequences_t& escapeSequences(localCharsetConversion->getDictionary().getEscapeSequences());
+    const charsetDictionary::escapeSequences_t& escapeSequences(defaultCharsetConversion::getDictionary().getEscapeSequences());
 
     // Position and properties of the next escape sequence
     ///////////////////////////////////////////////////////////
     size_t escapePosition = std::string::npos;
     std::string escapeString;
-    std::string isoTable;
+    const charsetInformation* pNextCharsetInformation = nullptr;
 
     // Scan all the string and look for valid escape sequences.
     // The partial strings are converted using the dicom
@@ -197,7 +205,7 @@ std::wstring dicomConversion::convertToUnicode(const std::string& value, const c
                 {
                     escapePosition = findEscape;
                     escapeString = scanEscapes->first;
-                    isoTable = scanEscapes->second;
+                    pNextCharsetInformation = scanEscapes->second;
                 }
             }
         }
@@ -235,9 +243,10 @@ std::wstring dicomConversion::convertToUnicode(const std::string& value, const c
         scanString = escapePosition + escapeString.length();
         escapePosition = std::string::npos;
 
-        // An iso table is coupled to the found escape sequence.
-        ///////////////////////////////////////////////////////////
-        localCharsetConversion.reset(new defaultCharsetConversion(isoTable));
+        if(pNextCharsetInformation != nullptr)
+        {
+            localCharsetConversion.reset(new defaultCharsetConversion(*pNextCharsetInformation));
+        }
     }
 
     return returnString;

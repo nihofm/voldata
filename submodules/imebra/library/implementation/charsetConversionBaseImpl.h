@@ -56,12 +56,12 @@ struct charsetInformation
 
     charsetInformation(const charsetInformation& right);
 
-    std::string m_dicomName;       ///< DICOM name for the charset
-    std::string m_escapeSequence;  ///< Escape sequence for ISO 2022
-    std::string m_isoRegistration; ///< ISO registration string
-    std::string m_javaRegistration;///< Java registration string
-    unsigned long m_codePage;      ///< codePage used by Windows
-    bool m_bZeroFlag;              ///< needs flags=0 in Windows
+    std::string m_dicomName;        ///< DICOM name for the charset
+    std::string m_escapeSequence;   ///< Escape sequence for ISO 2022
+    std::string m_isoRegistration;  ///< ISO registration string
+    std::string m_javaRegistration; ///< Java registration string
+    unsigned long m_codePage;       ///< codePage used by Windows
+    bool m_bZeroFlag;               ///< needs flags=0 in Windows
 };
 
 
@@ -75,13 +75,20 @@ class charsetDictionary
 public:
     charsetDictionary();
 
-    const charsetInformation& getCharsetInformation(const std::string& dicomName) const;
+    const charsetInformation& getCharsetInformation(const std::string& dicomName, size_t variant) const;
 
-    typedef std::map<std::string, std::string> escapeSequences_t;
+    typedef std::map<std::string, const charsetInformation*> escapeSequences_t;
     const escapeSequences_t& getEscapeSequences() const;
 
 private:
-    void registerCharset(const std::string& dicomName, const std::string& escapeSequence, const std::string& isoName, const std::string& javaName, const unsigned long windowsPage, const bool bZeroFlag);
+    void registerCharset(const std::string& dicomName,
+                         const std::string& isoName, const std::string& javaName, const unsigned long windowsPage,
+                         const bool bZeroFlag);
+
+    void registerCharset(const std::string& dicomName,
+                         const std::string& escapeSequence0, const std::string& isoName0, const std::string& javaName0, const unsigned long windowsPage0,
+                         const std::string& escapeSequence1, const std::string& isoName1, const std::string& javaName1, const unsigned long windowsPage1,
+                         const bool bZeroFlag);
 
     typedef std::map<std::string, charsetInformation> dictionary_t;
     dictionary_t m_dictionary;
@@ -113,7 +120,7 @@ public:
     /// @return the only instance of the charset dictionary
     ///
     ///////////////////////////////////////////////////////////
-    const charsetDictionary& getDictionary() const;
+    static const charsetDictionary& getDictionary();
 
     /// \brief Removes all the non alphanumeric and non digit
     ///        chars from the string, convert it to upper-case.

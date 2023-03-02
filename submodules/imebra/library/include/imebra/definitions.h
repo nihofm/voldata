@@ -163,6 +163,7 @@ enum class tagVR_t: std::uint32_t
     OD = 0x4f44, ///< Other Double String
     OF = 0x4f46, ///< Other Float String
     OL = 0x4f4c, ///< Other Long String
+    OV = 0x4f56, ///< Other Very long
     OW = 0x4f57, ///< Other Word String
     PN = 0x504e, ///< Person Name
     SH = 0x5348, ///< Short String
@@ -170,6 +171,7 @@ enum class tagVR_t: std::uint32_t
     SQ = 0x5351, ///< Sequence of Items
     SS = 0x5353, ///< Signed Short
     ST = 0x5354, ///< Short Text
+    SV = 0x5356, ///< Signed Very Long
     TM = 0x544d, ///< Time
     UC = 0x5543, ///< Unlimited characters
     UI = 0x5549, ///< Unique Identifier
@@ -177,7 +179,9 @@ enum class tagVR_t: std::uint32_t
     UN = 0x554e, ///< Unknown
     UR = 0x5552, ///< Unified Resource Identifier
     US = 0x5553, ///< Unsigned Short
-    UT = 0x5554  ///< Unlimited Text
+    UT = 0x5554, ///< Unlimited Text
+    UV = 0x5556  ///< Unsigned Very Long
+
 };
 
 #ifndef SWIG
@@ -198,10 +202,12 @@ static_assert((std::uint16_t)tagVR_t::SB == MAKE_VR_ENUM("SB"), "Wrong VR enumer
 static_assert((std::uint16_t)tagVR_t::OD == MAKE_VR_ENUM("OD"), "Wrong VR enumeration value");
 static_assert((std::uint16_t)tagVR_t::OF == MAKE_VR_ENUM("OF"), "Wrong VR enumeration value");
 static_assert((std::uint16_t)tagVR_t::OL == MAKE_VR_ENUM("OL"), "Wrong VR enumeration value");
+static_assert((std::uint16_t)tagVR_t::OV == MAKE_VR_ENUM("OV"), "Wrong VR enumeration value");
 static_assert((std::uint16_t)tagVR_t::OW == MAKE_VR_ENUM("OW"), "Wrong VR enumeration value");
 static_assert((std::uint16_t)tagVR_t::PN == MAKE_VR_ENUM("PN"), "Wrong VR enumeration value");
 static_assert((std::uint16_t)tagVR_t::SH == MAKE_VR_ENUM("SH"), "Wrong VR enumeration value");
 static_assert((std::uint16_t)tagVR_t::SL == MAKE_VR_ENUM("SL"), "Wrong VR enumeration value");
+static_assert((std::uint16_t)tagVR_t::SV == MAKE_VR_ENUM("SV"), "Wrong VR enumeration value");
 static_assert((std::uint16_t)tagVR_t::SQ == MAKE_VR_ENUM("SQ"), "Wrong VR enumeration value");
 static_assert((std::uint16_t)tagVR_t::SS == MAKE_VR_ENUM("SS"), "Wrong VR enumeration value");
 static_assert((std::uint16_t)tagVR_t::ST == MAKE_VR_ENUM("ST"), "Wrong VR enumeration value");
@@ -209,6 +215,7 @@ static_assert((std::uint16_t)tagVR_t::TM == MAKE_VR_ENUM("TM"), "Wrong VR enumer
 static_assert((std::uint16_t)tagVR_t::UC == MAKE_VR_ENUM("UC"), "Wrong VR enumeration value");
 static_assert((std::uint16_t)tagVR_t::UI == MAKE_VR_ENUM("UI"), "Wrong VR enumeration value");
 static_assert((std::uint16_t)tagVR_t::UL == MAKE_VR_ENUM("UL"), "Wrong VR enumeration value");
+static_assert((std::uint16_t)tagVR_t::UV == MAKE_VR_ENUM("UV"), "Wrong VR enumeration value");
 static_assert((std::uint16_t)tagVR_t::UN == MAKE_VR_ENUM("UN"), "Wrong VR enumeration value");
 static_assert((std::uint16_t)tagVR_t::UR == MAKE_VR_ENUM("UR"), "Wrong VR enumeration value");
 static_assert((std::uint16_t)tagVR_t::US == MAKE_VR_ENUM("US"), "Wrong VR enumeration value");
