@@ -1,10 +1,10 @@
 #pragma once
 
-#include <voldata/grid.h>
-#include <voldata/grid_dense.h>
-#include <voldata/grid_brick.h>
-#include <voldata/grid_vdb.h>
-#include <voldata/grid_nvdb.h>
+#include "grid.h"
+#include "grid_dense.h"
+#include "grid_brick.h"
+#include "grid_vdb.h"
+#include "grid_nvdb.h"
 
 #include <glm/glm.hpp>
 
@@ -58,7 +58,6 @@ public:
     std::pair<glm::vec3, glm::vec3> AABB(const std::string& gridname = "density") const;        // world-space AABB
     std::pair<float, float> minorant_majorant(const std::string& gridname = "density") const;   // minimum and maximal density values in the current grid
     std::string to_string(const std::string& indent="") const;                                  // string representation
-    void scale_and_move_to_unit_cube();                                                         // scale and move volume to fit into [-0.5, 0.5] unit cube
 
     // static grid management helpers
     static GridPtr load_grid(const std::string& filename, const std::string& gridname = "density");
@@ -73,11 +72,7 @@ public:
     // data
     size_t grid_frame_counter;          // current grid frame
     std::vector<GridFrame> grids;       // grid frames
-    glm::mat4 model;                    // global model matrix
-    glm::vec3 albedo;                   // global volume albedo
-    float phase;                        // global volume phase (henyey-greenstein g parameter)
-    float density_scale;                // global density scaling factor
-    float emission_scale;               // global emission scaling factor
+    glm::mat4 transform;                // transformation matrix
 };
 
 inline std::ostream& operator<<(std::ostream& out, const Volume& volume) { return out << volume.to_string(); }

@@ -1,4 +1,4 @@
-#include <voldata/grid_brick.h>
+#include "grid_brick.h"
 
 #include <iostream>
 #include <sstream>

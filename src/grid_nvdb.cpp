@@ -1,4 +1,4 @@
-#include <voldata/grid_nvdb.h>
+#include "grid_nvdb.h"
 #include <nanovdb/util/IO.h>
 #include <nanovdb/util/GridBuilder.h>
 

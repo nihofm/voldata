@@ -1,7 +1,7 @@
-#include <voldata/serialization.h>
-#include <voldata/grid_nvdb.h>
+#include "serialization.h"
+#include "grid_nvdb.h"
 #ifdef VOLDATA_WITH_OPENVDB
-#include <voldata/grid_vdb.h>
+#include "grid_vdb.h"
 #endif
 
 #include <fstream>

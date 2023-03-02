@@ -1,4 +1,4 @@
-#include <voldata/grid_vdb.h>
+#include "grid_vdb.h"
 #include <glm/gtx/string_cast.hpp>
 
 #ifdef VOLDATA_WITH_OPENVDB

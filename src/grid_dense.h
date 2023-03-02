@@ -1,6 +1,6 @@
 #pragma once
 
-#include <voldata/grid.h>
+#include "grid.h"
 
 #include <vector>
 #include <memory>

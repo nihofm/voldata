@@ -1,4 +1,4 @@
-#include <voldata/grid_dense.h>
+#include "grid_dense.h"
 
 #include <numeric>
 #include <algorithm>

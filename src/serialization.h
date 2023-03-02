@@ -1,8 +1,8 @@
 #pragma once
 
-#include <voldata/grid.h>
-#include <voldata/grid_dense.h>
-#include <voldata/grid_brick.h>
+#include "grid.h"
+#include "grid_dense.h"
+#include "grid_brick.h"
 
 #include <memory>
 #include <filesystem>

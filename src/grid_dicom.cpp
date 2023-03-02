@@ -1,6 +1,7 @@
-#include <voldata/grid_dicom.h>
+#include "grid_dicom.h"
 
 #include <numeric>
+#include <execution>
 #include <glm/gtx/string_cast.hpp>
 
 namespace voldata {
@@ -55,7 +56,7 @@ DICOMGrid::DICOMGrid(const std::vector<fs::path>& files) :
         dicom_datasets.push_back(imebra::CodecFactory::load(files[i].c_str()));
         dicom_images.push_back(dicom_datasets[i].getImage(0));
         // print tags?
-        //if (i == 0) outputDatasetTags(dicom_datasets[i]);
+        // if (i == 0) outputDatasetTags(dicom_datasets[i]);
 
         imebra::Image image = dicom_images[i];
         imebra::ReadingDataHandlerNumeric reader(image.getReadingDataHandler());
@@ -67,8 +68,8 @@ DICOMGrid::DICOMGrid(const std::vector<fs::path>& files) :
         std::cout << "reading dicom image " << i << "/" << files.size() << ": " <<
             image.getWidth() << "x" << image.getHeight() << "x" << image.getChannelsNumber() << "\r" << std::flush;
 
-        min_value = std::min(min_value, dicom_datasets[i].getFloat(imebra::TagId(imebra::tagId_t::SmallestImagePixelValue_0028_0106), 0, min_value));
-        max_value = std::max(max_value, dicom_datasets[i].getFloat(imebra::TagId(imebra::tagId_t::LargestImagePixelValue_0028_0107), 0, max_value));
+        min_value = std::min(min_value, dicom_datasets[i].getFloat(imebra::TagId(imebra::tagId_t::SmallestImagePixelValue_0028_0106), 0, FLT_MAX));
+        max_value = std::max(max_value, dicom_datasets[i].getFloat(imebra::TagId(imebra::tagId_t::LargestImagePixelValue_0028_0107), 0, FLT_MIN));
         size_bytes_total += image.getWidth() * image.getHeight() * image.getChannelsNumber() * reader.getUnitSize();
 
         if (i == 0) {
@@ -89,21 +90,45 @@ DICOMGrid::DICOMGrid(const std::vector<fs::path>& files) :
             transform[3][1] = dicom_datasets[i].getFloat(imebra::TagId(imebra::tagId_t::ImagePositionPatient_0020_0032), 1, 0.f);
             transform[3][2] = dicom_datasets[i].getFloat(imebra::TagId(imebra::tagId_t::ImagePositionPatient_0020_0032), 2, 0.f);
 
-            // TODO always rotate to y-up
-            transform = glm::rotate(transform, float(1.5 * M_PI), glm::vec3(0, 0, 1));
-
             // extract houndsfield rescale parameters
             rescale_slope = dicom_datasets[i].getFloat(imebra::TagId(imebra::tagId_t::RescaleSlope_0028_1053), 0, 1.f);
             rescale_intercept = dicom_datasets[i].getFloat(imebra::TagId(imebra::tagId_t::RescaleIntercept_0028_1052), 0, 0.f);
         }
     }
     std::cout << std::endl;
+
+    if (min_value == FLT_MAX && max_value == FLT_MIN) {
+        // pass to find global minorant and majorant
+        std::vector<uint32_t> slices(n_voxels.z);
+        std::iota(slices.begin(), slices.end(), 0);
+        std::vector<float> minima(n_voxels.z, FLT_MAX);
+        std::vector<float> maxima(n_voxels.z, FLT_MIN);
+        std::for_each(std::execution::par_unseq, slices.begin(), slices.end(),
+        [&](uint32_t z)
+        {
+            for (uint32_t y = 0; y < n_voxels.y; ++y)
+                for (uint32_t x = 0; x < n_voxels.x; ++x) {
+                    const float value = lookup_raw(glm::uvec3(x, y, z));
+                    minima[z] = std::min(minima[z], value);
+                    maxima[z] = std::max(maxima[z], value);
+                }
+        });
+        // reduce
+        for (uint32_t z = 0; z < n_voxels.z; ++z) {
+            min_value = std::min(min_value, minima[z]);
+            max_value = std::max(max_value, maxima[z]);
+        }
+    }
 }
 
 DICOMGrid::~DICOMGrid() {
     // TODO imebra segfault on deconstruct (double free?)
-    dicom_images.clear();
-    dicom_datasets.clear();
+    try {
+        dicom_images.clear();
+        dicom_datasets.clear();
+    } catch (std::exception e) {
+        std::cout << e.what() << std::endl;
+    }
 }
 
 float DICOMGrid::lookup_raw(const glm::uvec3& ipos) const {

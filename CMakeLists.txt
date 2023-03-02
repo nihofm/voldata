@@ -46,7 +46,6 @@ include_directories(submodules/imebra/library/include)
 include_directories(submodules/cereal/include)
 
 # openvdb
-
 list(APPEND CMAKE_MODULE_PATH "/usr/local/lib/cmake/OpenVDB") # support default non-standard OpenVDB install location
 find_package(OpenVDB)
 if (OpenVDB_FOUND)
@@ -61,17 +60,31 @@ endif()
 # ---------------------------------------------------------------------
 # directory management
 
-include_directories(include)
+include_directories(src)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 # ---------------------------------------------------------------------
-# traverse source tree
+# compile main library
 
-add_subdirectory(src)
+file(GLOB SOURCES "src/*.cpp")
+add_library(voldata SHARED ${SOURCES})
+target_link_libraries(voldata stdc++fs imebra tbb)
+
+if (VOLDATA_WITH_OPENVDB)
+    target_link_libraries(voldata ${OpenVDB_LIBRARIES})
+endif()
+
+# ---------------------------------------------------------------------
+# optionally compile tools
 
 if (VOLDATA_BUILD_TOOLS)
-    add_subdirectory(tools)
+    # simple executable to print grid info
+    add_executable(voldata_print print.cpp)
+    target_link_libraries(voldata_print voldata)
+    # simple executable to load, convert and serialize grid formats
+    add_executable(voldata_serialize serialize.cpp)
+    target_link_libraries(voldata_serialize voldata)
 endif()

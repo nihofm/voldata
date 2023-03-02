@@ -1,6 +1,6 @@
-#include <voldata/volume.h>
-#include <voldata/grid_dicom.h>
-#include <voldata/serialization.h>
+#include "volume.h"
+#include "grid_dicom.h"
+#include "serialization.h"
 
 #include <fstream>
 #include <iostream>
@@ -13,7 +13,7 @@ namespace fs = std::filesystem;
 
 namespace voldata {
 
-Volume::Volume() : grid_frame_counter(0), model(glm::mat4(1)), albedo(1), phase(0.0), density_scale(1.0), emission_scale(1.0) {}
+Volume::Volume() : grid_frame_counter(0), transform(glm::mat4(1)) {}
 
 Volume::Volume(const GridPtr& grid, const std::string& gridname) : Volume() {
     GridFrame frame;
@@ -88,8 +88,8 @@ Volume::NanoVDBGridPtr Volume::current_grid_nvdb(const std::string& gridname) co
 }
 
 glm::mat4 Volume::get_transform(const std::string& gridname) const {
-    if (grids.size() <= grid_frame_counter) return model;
-    return model * current_grid(gridname)->transform;
+    if (grids.size() <= grid_frame_counter) return transform;
+    return transform * current_grid(gridname)->transform;
 }
 
 glm::vec4 Volume::to_world(const glm::vec4& index, const std::string& gridname) const {
@@ -118,29 +118,11 @@ std::string Volume::to_string(const std::string& indent) const {
     out << indent << "AABB: " << glm::to_string(bb_min) << " / " << glm::to_string(bb_max) << std::endl;
     out << indent << "modelmatrix: " << std::endl;
     for (int i = 0; i < 4; ++i)
-        out << indent << "    " << std::fixed << model[0][i] << ", " << model[1][i] << ", " << model[2][i] << ", " << model[3][i] << std::endl;
+        out << indent << "    " << std::fixed << transform[0][i] << ", " << transform[1][i] << ", " << transform[2][i] << ", " << transform[3][i] << std::endl;
     out << indent << "current grid frame: " << grid_frame_counter << " / " << grids.size() << std::endl;
     out << indent << "current grid: " << std::endl;
     out << current_grid()->to_string(indent + "    ") << std::endl;
-    out << indent << "albedo: " << glm::to_string(albedo) << std::endl;
-    out << indent << "phase: " << phase << std::endl;
-    out << indent << "density scale: " << density_scale;
     return out.str();
-}
-
-void Volume::scale_and_move_to_unit_cube() {
-    // compute max AABB over whole volume (animation)
-    glm::vec3 bb_min = glm::vec3(FLT_MAX), bb_max = glm::vec3(FLT_MIN);
-    for (const auto frame : grids) {
-        const auto grid = frame.at("density");
-        bb_min = glm::min(bb_min, glm::vec3(grid->transform * glm::vec4(0, 0, 0, 1)));
-        bb_max = glm::max(bb_max, glm::vec3(grid->transform * glm::vec4(glm::vec3(grid->index_extent()), 1)));
-    }
-    // scale to unit cube and move to origin
-    const glm::vec3 extent = bb_max - bb_min;
-    const float size = fmaxf(extent.x, fmaxf(extent.y, extent.z));
-    model = glm::translate(glm::scale(glm::mat4(1), glm::vec3(1.f / size)), -bb_min - 0.5f * extent);
-    density_scale = size;
 }
 
 Volume::GridPtr Volume::load_grid(const std::string& filename, const std::string& gridname) {
@@ -278,7 +260,6 @@ Volume::VolumePtr Volume::load_folder(const std::string& path, std::vector<std::
     std::vector<fs::path> files;
     for(auto& p : fs::directory_iterator(fs::path(path)))
         files.push_back(p);
-    // TODO: filter files based on type?
     // lexographic sort
     std::sort(files.begin(), files.end(), [](const fs::path& lhs, const fs::path& rhs) {
         if (lhs.string().size() == rhs.string().size())
@@ -286,6 +267,14 @@ Volume::VolumePtr Volume::load_folder(const std::string& path, std::vector<std::
         else
             return lhs.string().size() < rhs.string().size();
     });
+    // catch folder full of dicom files and load into single grid
+    if (!files.empty() && files[0].extension() == ".dcm") {
+        result->grids.resize(1);
+        try {
+            result->update_grid_frame(0, load_grid(files[0]));
+        } catch (std::runtime_error& e) {}
+        return result;
+    }
     // load and add grid frames in parallel
     result->grids.resize(files.size());
     std::vector<size_t> slices(files.size());

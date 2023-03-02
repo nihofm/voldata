@@ -1,6 +1,6 @@
 #pragma once
 
-#include <voldata/grid.h>
+#include "grid.h"
 
 #include <vector>
 #include <memory>
@@ -28,8 +28,8 @@ public:
     float min_value, max_value;
     float rescale_slope, rescale_intercept;
     size_t size_bytes_total;
-    std::vector<imebra::DataSet> dicom_datasets;
     std::vector<imebra::Image> dicom_images;
+    std::vector<imebra::DataSet> dicom_datasets;
 };
 
 }

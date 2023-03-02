@@ -1,4 +1,4 @@
-#include <voldata/grid.h>
+#include "grid.h"
 
 #include <sstream>
 #include <glm/gtx/string_cast.hpp>

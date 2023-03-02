@@ -1,11 +1,12 @@
 #pragma once
 
-#include <filesystem>
-namespace fs = std::filesystem;
-#include <voldata/grid.h>
+#include "grid.h"
 #ifdef VOLDATA_WITH_OPENVDB
 #include <openvdb/openvdb.h>
 #endif
+
+#include <filesystem>
+namespace fs = std::filesystem;
 
 namespace voldata {
 
