@@ -28,7 +28,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # ---------------------------------------------------------------------
 # dependencies
 
-
 include_directories(submodules)
 
 # glm
@@ -57,6 +56,7 @@ else()
     message(STATUS "OpenVDB NOT found, compiling without OpenVDB support...")
     add_definitions(-UVOLDATA_WITH_OPENVDB)
 endif()
+
 # ---------------------------------------------------------------------
 # directory management
 
