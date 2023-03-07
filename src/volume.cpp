@@ -129,7 +129,7 @@ Volume::GridPtr Volume::load_grid(const std::string& filename, const std::string
     fs::path path = filename;
     std::string extension = path.extension().string();
     std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
-    // handle .dat files (Siemens renderer)
+    // handle serialized .dat files
     if (extension == ".dat") {
         std::ifstream dat_file(path);
         if (!dat_file.is_open())
