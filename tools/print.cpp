@@ -3,7 +3,7 @@
 #include <chrono>
 #include <glm/gtx/string_cast.hpp>
 
-#include <voldata/voldata.h>
+#include <voldata.h>
 
 int main(int argc, char** argv) {
     if (argc != 2)

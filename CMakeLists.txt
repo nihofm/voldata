@@ -10,7 +10,7 @@ PROJECT(voldata
 # options
 
 option(VOLDATA_BUILD_GLM "" ON)
-option(VOLDATA_BUILD_TOOLS "" OFF)
+option(VOLDATA_BUILD_TOOLS "" ON)
 
 # ---------------------------------------------------------------------
 # compiler setup
@@ -82,9 +82,9 @@ endif()
 
 if (VOLDATA_BUILD_TOOLS)
     # simple executable to print grid info
-    add_executable(voldata_print print.cpp)
+    add_executable(voldata_print tools/print.cpp)
     target_link_libraries(voldata_print voldata)
     # simple executable to load, convert and serialize grid formats
-    add_executable(voldata_serialize serialize.cpp)
+    add_executable(voldata_serialize tools/serialize.cpp)
     target_link_libraries(voldata_serialize voldata)
 endif()
