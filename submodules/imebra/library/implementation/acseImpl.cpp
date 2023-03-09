@@ -2071,14 +2071,14 @@ std::shared_ptr<associationBase::receivedDataset> associationBase::decodePDU(boo
             }
             --numberOfLastPData;
 
-            bool bExplicitDataType(false);
+            codecs::dicomStreamCodec::VRType_t vrType = codecs::dicomStreamCodec::VRType_t::implicitVR;
             streamController::tByteOrdering endianType(streamController::tByteOrdering::lowByteEndian);
 
             if(!bCommand)
             {
                 // Adjust the transfer syntax flags
                 ///////////////////////////////////////////////////////////
-                bExplicitDataType = (transferSyntax != "1.2.840.10008.1.2");        // Implicit VR little endian
+                vrType = (transferSyntax == "1.2.840.10008.1.2") ? codecs::dicomStreamCodec::VRType_t::implicitVR : codecs::dicomStreamCodec::VRType_t::explicitVR; // Implicit VR little endian
 
                 // Explicit VR big endian
                 ///////////////////////////////////////////////////////////
@@ -2088,7 +2088,7 @@ std::shared_ptr<associationBase::receivedDataset> associationBase::decodePDU(boo
             std::shared_ptr<memoryStreamInput> dataSetStream(std::make_shared<memoryStreamInput>(datasetMemory));
             std::shared_ptr<streamReader> dataSetStreamReader(std::make_shared<streamReader>(dataSetStream));
             std::shared_ptr<dataSet> pDataset(std::make_shared<dataSet>(transferSyntax, charsetsList_t()));
-            codecs::dicomStreamCodec::parseStream(dataSetStreamReader, pDataset, bExplicitDataType, endianType);
+            codecs::dicomStreamCodec::parseStream(dataSetStreamReader, pDataset, vrType, endianType);
 
             // Return the dataset
             ///////////////////////////////////////////////////////////

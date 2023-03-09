@@ -108,6 +108,10 @@ class readingDataHandlerString : public readingDataHandler
 public:
     readingDataHandlerString(const memory& parseMemory, tagVR_t dataType, const char separator, const std::uint8_t paddingByte);
 
+    virtual std::int64_t getInt64(const size_t index) const override;
+
+    virtual std::uint64_t getUint64(const size_t index) const override;
+
     virtual std::int32_t getInt32(const size_t index) const override;
 
     virtual std::uint32_t getUint32(const size_t index) const override;
@@ -142,6 +146,10 @@ class readingDataHandlerStringNumbers: public readingDataHandlerString
 public:
     readingDataHandlerStringNumbers(const memory& parseMemory, tagVR_t dataType, const char separator, const std::uint8_t paddingByte);
 
+    virtual std::int64_t getInt64(const size_t index) const override;
+
+    virtual std::uint64_t getUint64(const size_t index) const override;
+
     virtual std::int32_t getInt32(const size_t index) const override;
 
     virtual std::uint32_t getUint32(const size_t index) const override;
@@ -167,6 +175,10 @@ public:
     writingDataHandlerString(const std::shared_ptr<buffer>& pBuffer, tagVR_t dataType, const char separator, const size_t unitSize, const size_t maxSize);
 
     virtual ~writingDataHandlerString() override;
+
+    virtual void setInt64(const size_t index, const std::int64_t value) override;
+
+    virtual void setUint64(const size_t index, const std::uint64_t value) override;
 
     virtual void setInt32(const size_t index, const std::int32_t value) override;
 
@@ -212,6 +224,10 @@ class writingDataHandlerStringNumbers: public writingDataHandlerString
 {
 public:
     writingDataHandlerStringNumbers(const std::shared_ptr<buffer>& pBuffer, tagVR_t dataType, const char separator, const size_t unitSize, const size_t maxSize);
+
+    virtual void setInt64(const size_t index, const std::int64_t value) override;
+
+    virtual void setUint64(const size_t index, const std::uint64_t value) override;
 
     virtual void setInt32(const size_t index, const std::int32_t value) override;
 

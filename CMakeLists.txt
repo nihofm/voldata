@@ -1,46 +1,90 @@
-project(voldata LANGUAGES C CXX)
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.16)
 
-# ---------------------------------------------------------------------
-# path management
-
-# output directories
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
+PROJECT(voldata
+    VERSION 0.3
+    DESCRIPTION "Small framework to load/manage/convert volumetric grid data."
+    LANGUAGES C CXX
+)
 
 # ---------------------------------------------------------------------
 # options
 
+option(VOLDATA_BUILD_GLM "" ON)
+option(VOLDATA_BUILD_TOOLS "" ON)
+
 # ---------------------------------------------------------------------
-# compiler flags
+# compiler setup
+
+if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+	message(STATUS "No release type specified. Setting to 'Release'.")
+	set(CMAKE_BUILD_TYPE Release)
+	set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "RelWithDebInfo")
+endif()
 
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_compile_options(-pthread -march=native)
-add_compile_options(-Wall -Wno-unused-parameter -Wno-unused-variable -Wno-deprecated-declarations)
-
 # ---------------------------------------------------------------------
-# submodules
+# dependencies
 
 include_directories(submodules)
+
+# glm
+if (VOLDATA_BUILD_GLM)
+    add_subdirectory(submodules/glm)
+    include_directories(submodules/glm)
+endif()
+
+# imebra
+set(IMEBRA_SHARED_STATIC STATIC)
+add_subdirectory(submodules/imebra)
+include_directories(submodules/imebra/library/include)
 
 # cereal
 include_directories(submodules/cereal/include)
 
 # openvdb
-set(OPENVDB_BUILD_BINARIES OFF CACHE BOOL "disable openvdb binaries" FORCE)
-set(OPENVDB_BUILD_PYTHON_MODULE OFF CACHE BOOL "enable openvdb python module" FORCE)
-add_subdirectory(submodules/openvdb)
-include_directories(submodules/openvdb)
-
-# imebra
-add_subdirectory(submodules/imebra)
-include_directories(submodules/imebra/library/include)
+list(APPEND CMAKE_MODULE_PATH "/usr/local/lib/cmake/OpenVDB") # support default non-standard OpenVDB install location
+find_package(OpenVDB)
+if (OpenVDB_FOUND)
+    message(STATUS "Found OpenVDB version: ${OpenVDB_VERSION}, compiling with OpenVDB support...")
+    set(VOLDATA_WITH_OPENVDB ON)
+    add_definitions(-DVOLDATA_WITH_OPENVDB)
+    include_directories(${OpenVDB_INCLUDE_DIRS})
+else()
+    message(STATUS "OpenVDB NOT found, compiling without OpenVDB support...")
+    add_definitions(-UVOLDATA_WITH_OPENVDB)
+endif()
 
 # ---------------------------------------------------------------------
-# traverse source tree
+# directory management
 
-add_subdirectory(src)
-add_subdirectory(tools)
+include_directories(src)
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+
+# ---------------------------------------------------------------------
+# compile main library
+
+file(GLOB SOURCES "src/*.cpp")
+add_library(voldata SHARED ${SOURCES})
+target_link_libraries(voldata stdc++fs imebra tbb)
+
+if (VOLDATA_WITH_OPENVDB)
+    target_link_libraries(voldata ${OpenVDB_LIBRARIES})
+endif()
+
+# ---------------------------------------------------------------------
+# optionally compile tools
+
+if (VOLDATA_BUILD_TOOLS)
+    # simple executable to print grid info
+    add_executable(voldata_print tools/print.cpp)
+    target_link_libraries(voldata_print voldata)
+    # simple executable to load, convert and serialize grid formats
+    add_executable(voldata_serialize tools/serialize.cpp)
+    target_link_libraries(voldata_serialize voldata)
+endif()

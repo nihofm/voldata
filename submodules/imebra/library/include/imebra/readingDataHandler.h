@@ -97,6 +97,20 @@ public:
     ///////////////////////////////////////////////////////////////////////////////
     tagVR_t getDataType() const;
 
+    /// \brief Retrieve a buffer's value as signed 64 bit integer.
+    ///
+    /// If the buffer's value cannot be converted to a signed 64 bit integer
+    /// then throws DataHandlerConversionError.
+    ///
+    /// Throws MissingItemError if the requested index does not exist.
+    ///
+    /// \param index the element number within the buffer. Must be smaller than
+    ///        getSize()
+    /// \return the tag's value as a signed 64 bit integer
+    ///
+    ///////////////////////////////////////////////////////////////////////////////
+    std::int64_t getInt64(size_t index) const;
+
     /// \brief Retrieve a buffer's value as signed long integer (32 bit).
     ///
     /// If the buffer's value cannot be converted to a signed long integer
@@ -115,6 +129,20 @@ public:
     ///
     ///////////////////////////////////////////////////////////////////////////////
     std::int32_t getSignedLong(size_t index) const;
+
+    /// \brief Retrieve a buffer's value as an unsigned 64 bit integer.
+    ///
+    /// If the buffer's value cannot be converted to an unsigned 64 bit integer
+    /// then throws DataHandlerConversionError.
+    ///
+    /// Throws MissingItemError if the requested index does not exist.
+    ///
+    /// \param index the element number within the buffer. Must be smaller than
+    ///        getSize()
+    /// \return the tag's value as an unsigned 64 bit integer
+    ///
+    ///////////////////////////////////////////////////////////////////////////////
+    std::uint64_t getUint64(size_t index) const;
 
     /// \brief Retrieve a buffer's value as an unsigned long integer (32 bit).
     ///

@@ -113,6 +113,18 @@ public:
     ///////////////////////////////////////////////////////////////////////////////
     tagVR_t getDataType() const;
 
+    /// \brief Write a 64 bit signed integer.
+    ///
+    /// If the value cannot be converted from a 64 bit signed integer
+    /// then throws DataHandlerConversionError.
+    ///
+    /// \param index the element number within the buffer. Must be smaller than
+    ///        getSize()
+    /// \param value the value to write
+    ///
+    ///////////////////////////////////////////////////////////////////////////////
+    void setInt64(size_t index, std::int64_t value);
+
     /// \brief Write a signed long integer (32 bit).
     ///
     /// If the value cannot be converted from a signed long integer
@@ -129,6 +141,18 @@ public:
     ///
     ///////////////////////////////////////////////////////////////////////////////
     void setSignedLong(size_t index, std::int32_t value);
+
+    /// \brief Write an unsigned 64 bit integer.
+    ///
+    /// If the value cannot be converted from an unsigned 64 bit integer
+    /// then throws DataHandlerConversionError.
+    ///
+    /// \param index the element number within the buffer. Must be smaller than
+    ///        getSize()
+    /// \param value the value to write
+    ///
+    ///////////////////////////////////////////////////////////////////////////////
+    void setUint64(size_t index, std::uint64_t value);
 
     /// \brief Write an unsigned long integer (32 bit).
     ///

@@ -72,10 +72,12 @@ dicomDictionary::dicomDictionary()
     registerVR(tagVR_t::OD, true,  8, 0);
     registerVR(tagVR_t::OF, true,  4, 0);
     registerVR(tagVR_t::OL, true,  4, 0);
+    registerVR(tagVR_t::OV, true,  8, 0);
     registerVR(tagVR_t::OW, true,  2, 0);
     registerVR(tagVR_t::PN, false, 0, 64);
     registerVR(tagVR_t::SH, false, 0, 16);
     registerVR(tagVR_t::SL, false, 4, 0);
+    registerVR(tagVR_t::SV, false, 8, 0);
     registerVR(tagVR_t::SQ, true,  0, 0);
     registerVR(tagVR_t::SS, false, 2, 0);
     registerVR(tagVR_t::ST, false, 0, 1024);
@@ -83,6 +85,7 @@ dicomDictionary::dicomDictionary()
     registerVR(tagVR_t::UC, true, 0, 0);
     registerVR(tagVR_t::UI, false, 0, 64);
     registerVR(tagVR_t::UL, false, 4, 0);
+    registerVR(tagVR_t::UV, false, 8, 0);
     registerVR(tagVR_t::UN, true,  0, 0);
     registerVR(tagVR_t::UR, true, 0, 0);
     registerVR(tagVR_t::US, false, 2, 0);

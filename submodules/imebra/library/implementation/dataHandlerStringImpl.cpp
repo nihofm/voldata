@@ -76,6 +76,11 @@ readingDataHandlerString::readingDataHandlerString(const memory &parseMemory, ta
         }
         m_strings.push_back(parseString.substr(firstPosition, nextPosition - firstPosition));
         firstPosition = ++nextPosition;
+        if(firstPosition == parseString.size())
+        {
+            m_strings.push_back("");
+            break;
+        }
     }
 
     IMEBRA_FUNCTION_END();
@@ -85,6 +90,28 @@ readingDataHandlerString::readingDataHandlerString(const memory &parseMemory, ta
 void readingDataHandlerString::throwNumberConversionError() const
 {
     IMEBRA_THROW(DataHandlerConversionError, "Cannot convert a " << dicomDictionary::getDicomDictionary()->enumDataTypeToString(getDataType()) << " to a number");
+}
+
+// Get the data element as a int64_t
+///////////////////////////////////////////////////////////
+std::int64_t readingDataHandlerString::getInt64(const size_t /* index */) const
+{
+    IMEBRA_FUNCTION_START();
+
+    throwNumberConversionError();
+
+    IMEBRA_FUNCTION_END();
+}
+
+// Get the data element as an uint64_t
+///////////////////////////////////////////////////////////
+std::uint64_t readingDataHandlerString::getUint64(const size_t /* index */) const
+{
+    IMEBRA_FUNCTION_START();
+
+    throwNumberConversionError();
+
+    IMEBRA_FUNCTION_END();
 }
 
 // Get the data element as a signed long
@@ -232,6 +259,27 @@ readingDataHandlerStringNumbers::readingDataHandlerStringNumbers(const memory &p
 {
 }
 
+// Get the data element as a int64_t
+///////////////////////////////////////////////////////////
+std::int64_t readingDataHandlerStringNumbers::getInt64(const size_t index) const
+{
+    IMEBRA_FUNCTION_START();
+
+    return convertFromString<std::string, std::int64_t>(getString(index));
+
+    IMEBRA_FUNCTION_END();
+}
+
+// Get the data element as an uint64_t
+///////////////////////////////////////////////////////////
+std::uint64_t readingDataHandlerStringNumbers::getUint64(const size_t index) const
+{
+    IMEBRA_FUNCTION_START();
+
+    return convertFromString<std::string, std::uint64_t>(getString(index));
+
+    IMEBRA_FUNCTION_END();
+}
 
 // Get the data element as a signed long
 ///////////////////////////////////////////////////////////
@@ -364,6 +412,28 @@ writingDataHandlerString::~writingDataHandlerString()
 void writingDataHandlerString::throwNumberConversionError() const
 {
     IMEBRA_THROW(DataHandlerConversionError, "Cannot convert a number to " << dicomDictionary::getDicomDictionary()->enumDataTypeToString(getDataType()));
+}
+
+// Set the data element as a int64_t
+///////////////////////////////////////////////////////////
+void writingDataHandlerString::setInt64(const size_t /* index */, const std::int64_t /* value */)
+{
+    IMEBRA_FUNCTION_START();
+
+    throwNumberConversionError();
+
+    IMEBRA_FUNCTION_END();
+}
+
+// Set the data element as an uint64_t
+///////////////////////////////////////////////////////////
+void writingDataHandlerString::setUint64(const size_t /* index */, const std::uint64_t /* value */)
+{
+    IMEBRA_FUNCTION_START();
+
+    throwNumberConversionError();
+
+    IMEBRA_FUNCTION_END();
 }
 
 // Set the data element as a signed long
@@ -527,6 +597,28 @@ void writingDataHandlerString::validate() const
 writingDataHandlerStringNumbers::writingDataHandlerStringNumbers(const std::shared_ptr<buffer> &pBuffer, tagVR_t dataType, const char separator, const size_t unitSize, const size_t maxSize):
     writingDataHandlerString(pBuffer, dataType, separator, unitSize, maxSize)
 {
+}
+
+// Set the data element as a int64_t
+///////////////////////////////////////////////////////////
+void writingDataHandlerStringNumbers::setInt64(const size_t index, const std::int64_t value)
+{
+    IMEBRA_FUNCTION_START();
+
+    convertToString<std::int64_t>(index, value);
+
+    IMEBRA_FUNCTION_END();
+}
+
+// Set the data element as an uint64_t
+///////////////////////////////////////////////////////////
+void writingDataHandlerStringNumbers::setUint64(const size_t index, const std::uint64_t value)
+{
+    IMEBRA_FUNCTION_START();
+
+    convertToString<std::uint64_t>(index, value);
+
+    IMEBRA_FUNCTION_END();
 }
 
 // Set the data element as a signed long

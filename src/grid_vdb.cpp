@@ -1,4 +1,7 @@
 #include "grid_vdb.h"
+#include <glm/gtx/string_cast.hpp>
+
+#ifdef VOLDATA_WITH_OPENVDB
 
 namespace voldata {
 
@@ -25,16 +28,20 @@ OpenVDBGrid::OpenVDBGrid(const fs::path& filename, const std::string& gridname) 
     // compute index bounding box
     const openvdb::CoordBBox box = grid->evalActiveVoxelBoundingBox();
     ibb_min = num_voxels() == 0 ? glm::ivec3(0) : glm::ivec3(box.min().x(), box.min().y(), box.min().z());
-    ibb_max = num_voxels() == 0 ? glm::ivec3(0) : glm::ivec3(box.max().x(), box.max().y(), box.max().z());
+    const openvdb::Coord dim = grid->evalActiveVoxelDim();
+    extent = glm::uvec3(dim.x(), dim.y(), dim.z());
     // compute minorant and majorant
-    grid->evalMinMax(minorant, majorant);
-    minorant = std::min(minorant, grid->background());
+    openvdb::math::MinMax extrema = openvdb::tools::minMax(grid->tree());
+    minorant = std::min(extrema.min(), grid->background());
+    majorant = extrema.max();
     // extract transform
     if (!grid->transform().isLinear()) throw std::runtime_error("Only linear transformations supported!");
     const openvdb::Mat4R mat4 = grid->transform().baseMap()->getAffineMap()->getMat4();
     for (int i = 0; i < 4; ++i)
         for (int j = 0; j < 4; ++j)
             transform[i][j] = mat4(i, j);
+    // translate by ibb_min in world space to align grid
+    transform[3] += transform * glm::vec4(ibb_min.x, ibb_min.y, ibb_min.z, 0);
 }
 
 OpenVDBGrid::OpenVDBGrid(const Grid& other) : Grid(other) {
@@ -56,18 +63,22 @@ OpenVDBGrid::OpenVDBGrid(const Grid& other) : Grid(other) {
     }
     grid->pruneGrid();
     // compute index bounding box
+    const openvdb::Coord dim = grid->evalActiveVoxelDim();
+    extent = glm::uvec3(dim.x(), dim.y(), dim.z());
     const openvdb::CoordBBox box = grid->evalActiveVoxelBoundingBox();
     ibb_min = num_voxels() == 0 ? glm::ivec3(0) : glm::ivec3(box.min().x(), box.min().y(), box.min().z());
-    ibb_max = num_voxels() == 0 ? glm::ivec3(0) : glm::ivec3(box.max().x(), box.max().y(), box.max().z());
     // compute minorant and majorant
-    grid->evalMinMax(minorant, majorant);
-    minorant = std::min(minorant, grid->background());
+    openvdb::math::MinMax extrema = openvdb::tools::minMax(grid->tree());
+    minorant = std::min(extrema.min(), grid->background());
+    majorant = extrema.max();
     // set transform
     openvdb::Mat4R mat4;
     for (int i = 0; i < 4; ++i)
         for (int j = 0; j < 4; ++j)
             mat4(i, j) = transform[i][j];
     grid->setTransform(openvdb::math::Transform::createLinearTransform(mat4));
+    // translate by ibb_min in world space to align grid
+    transform[3] += transform * glm::vec4(ibb_min.x, ibb_min.y, ibb_min.z, 0);
 }
 
 OpenVDBGrid::OpenVDBGrid(const std::shared_ptr<Grid>& other) : OpenVDBGrid(*other) {}
@@ -84,8 +95,7 @@ std::pair<float, float> OpenVDBGrid::minorant_majorant() const {
 }
 
 glm::uvec3 OpenVDBGrid::index_extent() const {
-    if (num_voxels() == 0) return glm::uvec3(0);
-    return ibb_max - ibb_min + 1;
+    return extent;
 }
 
 size_t OpenVDBGrid::num_voxels() const {
@@ -94,15 +104,6 @@ size_t OpenVDBGrid::num_voxels() const {
 
 size_t OpenVDBGrid::size_bytes() const {
     return grid->memUsage();
-}
-
-std::string OpenVDBGrid::to_string(const std::string& indent) const {
-    std::stringstream out;
-    out << Grid::to_string(indent) << std::endl;
-    out << indent << "ibb_min: " << glm::to_string(ibb_min) << std::endl;
-    out << indent << "ibb_max: " << glm::to_string(ibb_max) << std::endl;
-    grid->print(out);
-    return out.str().erase(out.str().rfind("]") + 1);
 }
 
 void OpenVDBGrid::write(const fs::path& path) const {
@@ -116,3 +117,5 @@ void OpenVDBGrid::write(const fs::path& path) const {
 }
 
 }
+
+#endif
