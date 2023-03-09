@@ -18,3 +18,7 @@ Either clone the repository using `--recursive` flag, or run `git submodule upda
 # Usage
 
 See `grid.h` and `volume.h` for the general interface and the `tools/` directory for examples.
+
+# Licence
+
+This library is under MIT license and freely usable, however note that the [Imebra](https://imebra.com/) submodule used for loading DICOM grids is licenced unter GPL.
