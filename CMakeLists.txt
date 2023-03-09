@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.16)
 
 PROJECT(voldata
-    VERSION 0.2
-    DESCRIPTION "3D volume loading/management framework."
+    VERSION 0.3
+    DESCRIPTION "Small framework to load/manage/convert volumetric grid data."
     LANGUAGES C CXX
 )
 

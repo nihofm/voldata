@@ -1,6 +1,6 @@
 # VolData
 
-Small volume data loading and management library, supporting OpenVDB, NanoVDB, DICOM and dense or sparse serialized grid data. Volume animations (discretized grids per frame on disk) are also supported.
+Small framwork for loading, management and conversion of volume grid data, supporting OpenVDB, NanoVDB, DICOM and dense or sparse serialized grid data. Volume animations, stored as discretized grids per frame on disk, are also supported.
 
 # Submodules
 
