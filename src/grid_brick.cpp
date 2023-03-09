@@ -1,9 +1,11 @@
 #include "grid_brick.h"
 
 #include <iostream>
+#include <sstream>
 #include <numeric>
 #include <algorithm>
 #include <execution>
+#include <glm/gtx/string_cast.hpp>
 
 namespace voldata {
 
@@ -29,15 +31,18 @@ glm::vec2 decode_range(uint32_t data) {
 
 uint32_t encode_ptr(const glm::uvec3& ptr) {
     assert(ptr.x < MAX_BRICKS && ptr.y < MAX_BRICKS && ptr.z < MAX_BRICKS);
-    return glm::clamp(ptr.x, 0u, MAX_BRICKS-1) | (glm::clamp(ptr.y, 0u, MAX_BRICKS-1) << BITS_PER_AXIS) | (glm::clamp(ptr.z, 0u, MAX_BRICKS-1) << (2*BITS_PER_AXIS));
+    return (glm::clamp(ptr.x, 0u, MAX_BRICKS - 1) << (2 + 2 * BITS_PER_AXIS)) |
+           (glm::clamp(ptr.y, 0u, MAX_BRICKS - 1) << (2 + 1 * BITS_PER_AXIS)) |
+           (glm::clamp(ptr.z, 0u, MAX_BRICKS - 1) << (2 + 0 * BITS_PER_AXIS));
 }
 
 glm::uvec3 decode_ptr(uint32_t data) {
-    return glm::uvec3(data & (MAX_BRICKS-1), (data >> BITS_PER_AXIS) & (MAX_BRICKS-1), (data >> (2*BITS_PER_AXIS)) & (MAX_BRICKS-1));
+    return glm::uvec3((data >> (2 + 2 * BITS_PER_AXIS)) & (MAX_BRICKS - 1),
+                      (data >> (2 + 1 * BITS_PER_AXIS)) & (MAX_BRICKS - 1),
+                      (data >> (2 + 0 * BITS_PER_AXIS)) & (MAX_BRICKS - 1));
 }
 
 uint8_t encode_voxel(float value, const glm::vec2& range) {
-    assert(value >= range.x && value <= range.y);
     const float value_norm = glm::clamp((value - range.x) / (range.y - range.x), 0.f, 1.f);
     return uint8_t(std::round(255 * value_norm));
 }
@@ -90,7 +95,7 @@ BrickGrid::BrickGrid(const Grid& grid) :
                 if (local_max == local_min) continue;
                 // allocate memory for brick
                 const size_t id = brick_counter.fetch_add(1, std::memory_order_relaxed);
-                const glm::uvec3 ptr = indirection.linear_coord(id);
+                const glm::uvec3 ptr = indirection.to_coord(id);
                 // store pointer (offset)
                 indirection[brick] = encode_ptr(ptr);
                 // store brick data

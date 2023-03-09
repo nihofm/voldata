@@ -60,6 +60,14 @@ namespace codecs
 class dicomStreamCodec : public streamCodec
 {
 public:
+
+    enum class VRType_t
+    {
+        explicitVRUndecided = 0, ///< The VR is explicit, but may switch to implicit
+        explicitVR = 1,          ///< The VR is explicit
+        implicitVR = 2           ///< The VR is implicit
+    };
+
     /// \brief Parse the dicom stream and fill the data set
     ///        with the read tags.
     ///
@@ -70,14 +78,7 @@ public:
     /// @param pStream    The stream do decode
     /// @param pDataSet   A pointer to the data set to fill
     ///                    with the decoded tags
-    /// @param bExplicitDataType true if the stream is encoded
-    ///                    with explicit data type, false
-    ///                    otherwise.
-    ///                   Even when this parameter is set,
-    ///                    the function will automatically
-    ///                    switch this parameter if a mismatch
-    ///                    is detected during the decoding
-    ///                    procedure
+    /// @param vrType     The VR type (implicit/explicit)
     /// @param endianType The stream's endian type.
     ///                   Even when this parameter is set,
     ///                    the function will automatically
@@ -109,7 +110,7 @@ public:
     static void parseStream(
         std::shared_ptr<streamReader> pStream,
         std::shared_ptr<dataSet> pDataSet,
-        bool bExplicitDataType,
+        VRType_t vrType,
         streamController::tByteOrdering endianType,
         std::uint32_t maxSizeBufferLoad = 0xffffffff,
         std::uint32_t subItemLength = 0xffffffff,

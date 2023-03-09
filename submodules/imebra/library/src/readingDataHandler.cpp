@@ -61,6 +61,15 @@ tagVR_t ReadingDataHandler::getDataType() const
     IMEBRA_FUNCTION_END_LOG();
 }
 
+std::int64_t ReadingDataHandler::getInt64(size_t index) const
+{
+    IMEBRA_FUNCTION_START();
+
+    return m_pDataHandler->getInt64(index);
+
+    IMEBRA_FUNCTION_END_LOG();
+}
+
 std::int32_t ReadingDataHandler::getInt32(size_t index) const
 {
     IMEBRA_FUNCTION_START();
@@ -75,6 +84,15 @@ std::int32_t ReadingDataHandler::getSignedLong(size_t index) const
     IMEBRA_FUNCTION_START();
 
     return m_pDataHandler->getInt32(index);
+
+    IMEBRA_FUNCTION_END_LOG();
+}
+
+std::uint64_t ReadingDataHandler::getUint64(size_t index) const
+{
+    IMEBRA_FUNCTION_START();
+
+    return m_pDataHandler->getUint64(index);
 
     IMEBRA_FUNCTION_END_LOG();
 }

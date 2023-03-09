@@ -608,6 +608,7 @@ void dicomStreamCodec::readStream(std::shared_ptr<streamReader> pStream, std::sh
     ///////////////////////////////////////////////////////////
     std::uint8_t oldDicomSignature[8];
 
+    const size_t initialPosition = pStream->getControlledStreamPosition();
     try
     {
         pStream->read(oldDicomSignature, 8);
@@ -634,7 +635,7 @@ void dicomStreamCodec::readStream(std::shared_ptr<streamReader> pStream, std::sh
         bFailed=true;
     }
 
-    bool bExplicitDataType = true;
+    VRType_t vrType = VRType_t::explicitVRUndecided;
     streamController::tByteOrdering endianType=streamController::tByteOrdering::lowByteEndian;
     if(bFailed)
     {
@@ -654,12 +655,13 @@ void dicomStreamCodec::readStream(std::shared_ptr<streamReader> pStream, std::sh
         std::string firstDataType;
         firstDataType.push_back((char)(oldDicomSignature[4]));
         firstDataType.push_back((char)(oldDicomSignature[5]));
-        bExplicitDataType = dicomDictionary::getDicomDictionary()->isDataTypeValid(firstDataType);
+        vrType = dicomDictionary::getDicomDictionary()->isDataTypeValid(firstDataType) ? VRType_t::explicitVRUndecided : VRType_t::implicitVR;
+        pStream->seek(initialPosition);
     }
 
     // Signature OK. Now scan all the tags.
     ///////////////////////////////////////////////////////////
-    parseStream(pStream, pDataSet, bExplicitDataType, endianType, maxSizeBufferLoad);
+    parseStream(pStream, pDataSet, vrType, endianType, maxSizeBufferLoad);
 
     IMEBRA_FUNCTION_END();
 }
@@ -675,7 +677,7 @@ void dicomStreamCodec::readStream(std::shared_ptr<streamReader> pStream, std::sh
 ///////////////////////////////////////////////////////////
 void dicomStreamCodec::parseStream(std::shared_ptr<streamReader> pStream,
                              std::shared_ptr<dataSet> pDataSet,
-                             bool bExplicitDataType,
+                             VRType_t vrType,
                              streamController::tByteOrdering endianType,
                              std::uint32_t maxSizeBufferLoad /* = 0xffffffff */,
                              std::uint32_t subItemLength /* = 0xffffffff */,
@@ -761,10 +763,19 @@ void dicomStreamCodec::parseStream(std::shared_ptr<streamReader> pStream,
                         0,
                         endianType == streamController::tByteOrdering::lowByteEndian ? "1.2.840.10008.1.2.1" : "1.2.840.10008.1.2.2");
 
-            if(transferSyntax == "1.2.840.10008.1.2.2")
-                endianType = streamController::tByteOrdering::highByteEndian;
             if(transferSyntax == "1.2.840.10008.1.2")
-                bExplicitDataType=false;
+            {
+                vrType = VRType_t::implicitVR;
+            }
+            else if(vrType != VRType_t::implicitVR)
+            {
+                vrType = VRType_t::explicitVR;
+            }
+            if(transferSyntax == "1.2.840.10008.1.2.2")
+            {
+                endianType = streamController::tByteOrdering::highByteEndian;
+            }
+
 
             // Redo the byte adjustment
             pStream->adjustEndian((std::uint8_t*)&tagId, sizeof(tagId), endianType);
@@ -803,7 +814,7 @@ void dicomStreamCodec::parseStream(std::shared_ptr<streamReader> pStream,
         ///////////////////////////////////////////////////////////
         tagVR_t tagType(tagVR_t::UN);
 
-        if(bExplicitDataType && tagId!=0xfffe)
+        if(vrType != VRType_t::implicitVR && tagId!=0xfffe)
         {
             // Get the tag's type
             ///////////////////////////////////////////////////////////
@@ -831,16 +842,26 @@ void dicomStreamCodec::parseStream(std::shared_ptr<streamReader> pStream,
                     pStream->adjustEndian((std::uint8_t*)&tagLengthDWord, sizeof(tagLengthDWord), endianType);
                     (*pReadSubItemLength) += (std::uint32_t)sizeof(tagLengthDWord);
                 }
+                vrType = VRType_t::explicitVR;
             }
             catch(const DictionaryUnknownDataTypeError&)
             {
-                // The data type is not valid. Switch to implicit data type
-                ///////////////////////////////////////////////////////////
-                bExplicitDataType = false;
-                if(endianType == streamController::tByteOrdering::lowByteEndian)
-                    tagLengthDWord=(((std::uint32_t)tagLengthWord)<<16) | ((std::uint32_t)tagTypeString[0]) | (((std::uint32_t)tagTypeString[1])<<8);
+                if(vrType == VRType_t::explicitVR)
+                {
+                    tagType = tagVR_t::UN;
+                    tagLengthDWord=(std::uint32_t)tagLengthWord;
+                    wordSize = 0;
+                }
                 else
-                    tagLengthDWord=(std::uint32_t)tagLengthWord | (((std::uint32_t)tagTypeString[0])<<24) | (((std::uint32_t)tagTypeString[1])<<16);
+                {
+                    // The data type is not valid. Switch to implicit data type
+                    ///////////////////////////////////////////////////////////
+                    vrType = VRType_t::implicitVR;
+                    if(endianType == streamController::tByteOrdering::lowByteEndian)
+                        tagLengthDWord=(((std::uint32_t)tagLengthWord)<<16) | ((std::uint32_t)tagTypeString[0]) | (((std::uint32_t)tagTypeString[1])<<8);
+                    else
+                        tagLengthDWord=(std::uint32_t)tagLengthWord | (((std::uint32_t)tagTypeString[0])<<24) | (((std::uint32_t)tagTypeString[1])<<16);
+                }
             }
 
 
@@ -866,7 +887,7 @@ void dicomStreamCodec::parseStream(std::shared_ptr<streamReader> pStream,
         // Find the default data type and the tag's word's size
         //
         ///////////////////////////////////////////////////////////
-        if((!bExplicitDataType || tagId==0xfffe))
+        if((vrType == VRType_t::implicitVR || tagId==0xfffe))
         {
             // Group length. Data type is always UL
             ///////////////////////////////////////////////////////////
@@ -1008,7 +1029,7 @@ void dicomStreamCodec::parseStream(std::shared_ptr<streamReader> pStream,
                 std::shared_ptr<dataSet> sequenceDataSet(sequenceTag->appendSequenceItem());
                 sequenceDataSet->setItemOffset(itemOffset);
                 std::uint32_t effectiveLength(0);
-                parseStream(pStream, sequenceDataSet, bExplicitDataType, endianType, maxSizeBufferLoad, sequenceItemLength, &effectiveLength, depth + 1);
+                parseStream(pStream, sequenceDataSet, vrType, endianType, maxSizeBufferLoad, sequenceItemLength, &effectiveLength, depth + 1);
                 (*pReadSubItemLength) += effectiveLength;
                 if(tagLengthDWord!=0xffffffff)
                     tagLengthDWord-=effectiveLength;
