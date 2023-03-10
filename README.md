@@ -21,4 +21,4 @@ See `grid.h` and `volume.h` for the general interface and the `tools/` directory
 
 # Licence
 
-This library is under MIT license and freely usable, however note that the [Imebra](https://imebra.com/) submodule used for loading DICOM grids is licenced unter GPL.
+This library is under MIT license and freely usable, however note that the [Imebra](https://imebra.com/) submodule used for loading DICOM grids is licenced under GPL.
