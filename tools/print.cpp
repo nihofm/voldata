@@ -87,15 +87,15 @@ int main(int argc, char** argv) {
     std::cout << "Benchmarking grids (on CPU):" << std::endl;
     const glm::uvec3 n_voxels = volume->current_grid()->index_extent();
     const auto [avg_dense, time_dense] = benchmark_grid(dense_grid, n_voxels);
-    std::cout << "Dense grid: avg: " << avg_dense << ", time: " << time_dense << "ms." << std::endl;
+    std::cout << "Dense grid: avg: " << avg_dense << ", time: " << time_dense << "ms, size: " << round(dense_grid->size_bytes() / 1000000.0) << "MB." << std::endl;
     const auto [avg_brick, time_brick] = benchmark_grid(brick_grid, n_voxels);
-    std::cout << "Brick grid: avg: " << avg_brick << ", time: " << time_brick << "ms." << std::endl;
+    std::cout << "Brick grid: avg: " << avg_brick << ", time: " << time_brick << "ms, size: " << round(brick_grid->size_bytes() / 1000000.0) << "MB." << std::endl;
 #ifdef VOLDATA_WITH_OPENVDB
     const auto [avg_vdb, time_vdb] = benchmark_grid(vdb_grid, n_voxels);
-    std::cout << "OpenVDB grid: avg: " << avg_vdb << ", time: " << time_vdb << "ms." << std::endl;
+    std::cout << "OpenVDB grid: avg: " << avg_vdb << ", time: " << time_vdb << "ms, size: " << round(vdb_grid->size_bytes() / 1000000.0) << "MB." << std::endl;
 #endif
     const auto [avg_nvdb, time_nvdb] = benchmark_grid(nvdb_grid, n_voxels);
-    std::cout << "NanoVDB grid: avg: " << avg_nvdb << ", time: " << time_nvdb << "ms." << std::endl;
+    std::cout << "NanoVDB grid: avg: " << avg_nvdb << ", time: " << time_nvdb << "ms, size: " << round(nvdb_grid->size_bytes() / 1000000.0) << "MB." << std::endl;
 
     return 0;
 }
