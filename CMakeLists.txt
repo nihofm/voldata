@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 PROJECT(voldata
-    VERSION 0.3
+    VERSION 0.4
     DESCRIPTION "Small framework to load/manage/convert volumetric grid data."
     LANGUAGES C CXX
 )
@@ -9,7 +9,6 @@ PROJECT(voldata
 # ---------------------------------------------------------------------
 # options
 
-option(VOLDATA_BUILD_GLM "" ON)
 option(VOLDATA_BUILD_TOOLS "" ON)
 
 # ---------------------------------------------------------------------
@@ -28,39 +27,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # ---------------------------------------------------------------------
 # dependencies
 
-include_directories(submodules)
-
-# glm
-if (VOLDATA_BUILD_GLM)
-    add_subdirectory(submodules/glm)
-    include_directories(submodules/glm)
-endif()
-
 # imebra
 set(IMEBRA_SHARED_STATIC STATIC)
 add_subdirectory(submodules/imebra)
-include_directories(submodules/imebra/library/include)
-
-# cereal
-include_directories(submodules/cereal/include)
-
-# openvdb
-list(APPEND CMAKE_MODULE_PATH "/usr/local/lib/cmake/OpenVDB") # support default non-standard OpenVDB install location
-find_package(OpenVDB)
-if (OpenVDB_FOUND)
-    message(STATUS "Found OpenVDB version: ${OpenVDB_VERSION}, compiling with OpenVDB support...")
-    set(VOLDATA_WITH_OPENVDB ON)
-    add_definitions(-DVOLDATA_WITH_OPENVDB)
-    include_directories(${OpenVDB_INCLUDE_DIRS})
-else()
-    message(STATUS "OpenVDB NOT found, compiling without OpenVDB support...")
-    add_definitions(-UVOLDATA_WITH_OPENVDB)
-endif()
 
 # ---------------------------------------------------------------------
 # directory management
-
-include_directories(src)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
@@ -71,10 +43,28 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 file(GLOB SOURCES "src/*.cpp")
 add_library(voldata SHARED ${SOURCES})
+
+# includes
+target_include_directories(voldata PUBLIC src)
+target_include_directories(voldata PUBLIC submodules)
+target_include_directories(voldata PUBLIC submodules/glm)
+target_include_directories(voldata PRIVATE submodules/cereal/include)
+target_include_directories(voldata PRIVATE submodules/imebra/library/include)
+
+# linking
 target_link_libraries(voldata stdc++fs imebra tbb)
 
-if (VOLDATA_WITH_OPENVDB)
+# try to find openvdb
+list(APPEND CMAKE_MODULE_PATH "/usr/local/lib/cmake/OpenVDB") # support default non-standard OpenVDB install location
+find_package(OpenVDB)
+if (OpenVDB_FOUND)
+    message(STATUS "Found OpenVDB version: ${OpenVDB_VERSION}, compiling with OpenVDB support...")
+    add_definitions(-DVOLDATA_WITH_OPENVDB)
+    target_include_directories(voldata PRIVATE ${OpenVDB_INCLUDE_DIRS})
     target_link_libraries(voldata ${OpenVDB_LIBRARIES})
+else()
+    message(STATUS "OpenVDB NOT found, compiling without OpenVDB support...")
+    add_definitions(-UVOLDATA_WITH_OPENVDB)
 endif()
 
 # ---------------------------------------------------------------------
