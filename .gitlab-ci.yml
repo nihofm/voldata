@@ -1,0 +1,11 @@
+build_ubuntu:
+    stage: build
+    image: ubuntu
+    tags: 
+        - ubuntu
+    variables:
+        GIT_SUBMODULE_STRATEGY: recursive
+    script:
+        - apt-get update && apt-get upgrade -y
+        - DEBIAN_FRONTEND=noninteractive nice apt-get install -y build-essential cmake libopenvdb-dev
+        - cmake -S . -B build -DVOLDATA_BUILD_TOOLS=ON -DCMAKE_BUILD_TYPE=Release -Wno-dev && nice cmake --build build --parallel
