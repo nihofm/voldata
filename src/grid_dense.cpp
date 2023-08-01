@@ -35,7 +35,7 @@ DenseGrid::DenseGrid(const std::shared_ptr<Grid>& grid) : DenseGrid(*grid) {}
 
 DenseGrid::DenseGrid(size_t w, size_t h, size_t d, const uint8_t* data) :
     Grid(),
-    n_voxels(w, h, d), 
+    n_voxels(w, h, d),
     min_value(0),
     max_value(1)
 {
@@ -56,7 +56,7 @@ DenseGrid::DenseGrid(size_t w, size_t h, size_t d, const uint8_t* data) :
 
 DenseGrid::DenseGrid(size_t w, size_t h, size_t d, const float* data) :
     Grid(),
-    n_voxels(w, h, d), 
+    n_voxels(w, h, d),
     min_value(FLT_MAX),
     max_value(FLT_MIN)
 {

@@ -31,6 +31,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(IMEBRA_SHARED_STATIC STATIC)
 add_subdirectory(submodules/imebra)
 
+# json11
+add_subdirectory(submodules/json11)
+
 # ---------------------------------------------------------------------
 # directory management
 
@@ -52,7 +55,7 @@ target_include_directories(voldata PRIVATE submodules/cereal/include)
 target_include_directories(voldata PRIVATE submodules/imebra/library/include)
 
 # linking
-target_link_libraries(voldata stdc++fs imebra tbb)
+target_link_libraries(voldata stdc++fs imebra tbb json11)
 
 # try to find openvdb
 list(APPEND CMAKE_MODULE_PATH "/usr/local/lib/cmake/OpenVDB") # support default non-standard OpenVDB install location

@@ -10,6 +10,8 @@
 namespace fs = std::filesystem;
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/string_cast.hpp>
+#include <json11/json11.hpp>
+#include <happly/happly.h>
 
 namespace voldata {
 
@@ -176,8 +178,14 @@ Volume::GridPtr Volume::load_grid(const std::string& filename, const std::string
         std::shared_ptr<Grid> grid;
         if (format == "UCHAR")
             grid = std::make_shared<DenseGrid>(dim.x, dim.y, dim.z, data.data());
-        // TODO handle USHORT
-        else if (format == "FLOAT")
+        else if (format == "USHORT") {
+            // HACK: convert data to float
+            std::vector<float> data_float(data.size() / 2);
+            const uint16_t* ptr_16 = (uint16_t*)data.data();
+            for (size_t i = 0; i < data.size() / 2; ++i)
+                data_float.push_back(round(ptr_16[i] / 65535.f));
+            grid = std::make_shared<DenseGrid>(dim.x, dim.y, dim.z, data_float.data());
+        } else if (format == "FLOAT")
             grid = std::make_shared<DenseGrid>(dim.x, dim.y, dim.z, (const float*)data.data());
         else
             throw std::runtime_error("Unsupported data format for .dat file: " + format);
@@ -221,6 +229,48 @@ Volume::GridPtr Volume::load_grid(const std::string& filename, const std::string
     // handle binary brick grid
     else if (extension == ".brick") {
         return load_brick_grid(path);
+    }
+    // handle ply point cloud
+    else if (extension == ".ply") {
+        // read meta data
+        json11::Json meta;
+        {
+            std::filesystem::path meta_path = path;
+            std::ifstream f_in(meta_path.replace_filename("volume_meta.json"));
+            std::string file_contents(std::istreambuf_iterator<char>{f_in}, std::istreambuf_iterator<char>());
+            std::string err;
+            meta = json11::Json::parse(file_contents, err);
+            if (!err.empty())
+                std::cerr << "Warning: JSON metadata parsing failed: " << err << std::endl;
+        }
+        // std::cout << "min intensity: " << meta["min_intensity"].number_value() << std::endl;
+        // std::cout << "max intensity: " << meta["max_intensity"].number_value() << std::endl;
+        const glm::uvec3 n_voxels = glm::uvec3(meta["x_range"].array_items().size(), meta["y_range"].array_items().size(), meta["z_range"].array_items().size());
+        // std::cout << "dimensions: (" << n_voxels.x << ", " << n_voxels.y << ", " << n_voxels.z << ")" << std::endl;
+        // std::cout << meta.dump() << std::endl;
+        // read ply file
+        happly::PLYData plyIn(path);
+        std::vector<std::array<double, 3>> ply_vpos = plyIn.getVertexPositions();
+        std::vector<std::array<uint8_t, 3>> ply_vcol = plyIn.getVertexColors();
+        // std::cout << "ply vertex count: " << ply_vpos.size() << ", ply vertex color count: " << ply_vcol.size() << std::endl;
+        assert(ply_vpos.size() == ply_vcol.size());
+        // construct dense grid and fill values (hacky!)
+        const auto x_range = meta["x_range"].array_items();
+        const auto y_range = meta["y_range"].array_items();
+        const auto z_range = meta["z_range"].array_items();
+        const glm::vec3 bb_min(x_range[0].number_value(), y_range[0].number_value(), z_range[0].number_value());
+        const glm::vec3 bb_max(x_range[x_range.size() - 1].number_value(), y_range[y_range.size() - 1].number_value(), z_range[z_range.size() - 1].number_value());
+        auto grid = std::make_shared<DenseGrid>();
+        grid->n_voxels = glm::uvec3(x_range.size(), y_range.size(), z_range.size());
+        grid->min_value = meta["min_intensity"].number_value();
+        grid->max_value = meta["max_intensity"].number_value();
+        grid->voxel_data = std::vector<uint8_t>(grid->num_voxels(), 0);
+        for (size_t i = 0; i < ply_vpos.size(); ++i) {
+            const glm::vec3 pos = glm::vec3(ply_vpos[i][0], ply_vpos[i][1], ply_vpos[i][2]);
+            const glm::uvec3 idx = glm::uvec3(glm::vec3(n_voxels) * (pos - bb_min) / (bb_max - bb_min));
+            grid->voxel_data[idx.z * n_voxels.z * n_voxels.y + idx.y * n_voxels.z + idx.x] = ply_vcol[i][0]; // data in red channel
+        }
+        return grid;
     }
     else
         throw std::runtime_error("Unable to load file extension: " + extension);
