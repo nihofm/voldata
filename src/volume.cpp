@@ -243,33 +243,31 @@ Volume::GridPtr Volume::load_grid(const std::string& filename, const std::string
             if (!err.empty())
                 std::cerr << "Warning: JSON metadata parsing failed: " << err << std::endl;
         }
-        // std::cout << "min intensity: " << meta["min_intensity"].number_value() << std::endl;
-        // std::cout << "max intensity: " << meta["max_intensity"].number_value() << std::endl;
-        const glm::uvec3 n_voxels = glm::uvec3(meta["x_range"].array_items().size(), meta["y_range"].array_items().size(), meta["z_range"].array_items().size());
-        // std::cout << "dimensions: (" << n_voxels.x << ", " << n_voxels.y << ", " << n_voxels.z << ")" << std::endl;
-        // std::cout << meta.dump() << std::endl;
         // read ply file
         happly::PLYData plyIn(path);
         std::vector<std::array<double, 3>> ply_vpos = plyIn.getVertexPositions();
         std::vector<std::array<uint8_t, 3>> ply_vcol = plyIn.getVertexColors();
         // std::cout << "ply vertex count: " << ply_vpos.size() << ", ply vertex color count: " << ply_vcol.size() << std::endl;
         assert(ply_vpos.size() == ply_vcol.size());
-        // construct dense grid and fill values (hacky!)
-        const auto x_range = meta["x_range"].array_items();
+        // construct dense grid and fill values (flip x and z axes to align coordinate systems)
+        const auto x_range = meta["z_range"].array_items();
         const auto y_range = meta["y_range"].array_items();
-        const auto z_range = meta["z_range"].array_items();
-        const glm::vec3 bb_min(x_range[0].number_value(), y_range[0].number_value(), z_range[0].number_value());
-        const glm::vec3 bb_max(x_range[x_range.size() - 1].number_value(), y_range[y_range.size() - 1].number_value(), z_range[z_range.size() - 1].number_value());
+        const auto z_range = meta["x_range"].array_items();
+        glm::vec3 bb_min(x_range[0].number_value(), y_range[0].number_value(), z_range[0].number_value());
+        glm::vec3 bb_max(x_range[x_range.size() - 1].number_value(), y_range[y_range.size() - 1].number_value(), z_range[z_range.size() - 1].number_value());
         auto grid = std::make_shared<DenseGrid>();
         grid->n_voxels = glm::uvec3(x_range.size(), y_range.size(), z_range.size());
-        grid->min_value = meta["min_intensity"].number_value();
-        grid->max_value = meta["max_intensity"].number_value();
+        grid->min_value = 0.f;//meta["min_intensity"].number_value();
+        grid->max_value = 1.f;//meta["max_intensity"].number_value();
         grid->voxel_data = std::vector<uint8_t>(grid->num_voxels(), 0);
         for (size_t i = 0; i < ply_vpos.size(); ++i) {
             const glm::vec3 pos = glm::vec3(ply_vpos[i][0], ply_vpos[i][1], ply_vpos[i][2]);
-            const glm::uvec3 idx = glm::uvec3(glm::vec3(n_voxels) * (pos - bb_min) / (bb_max - bb_min));
-            grid->voxel_data[idx.z * n_voxels.z * n_voxels.y + idx.y * n_voxels.z + idx.x] = ply_vcol[i][0]; // data in red channel
+            const glm::uvec3 idx = glm::uvec3(glm::vec3(grid->n_voxels) * (pos - bb_min) / (bb_max - bb_min));
+            const uint8_t value = ply_vcol[i][0]; // intensity data in red channel
+            grid->voxel_data[i] = value;
+            // grid->voxel_data[idx.x * grid->n_voxels.y * grid->n_voxels.z + idx.y + grid->n_voxels.z + idx.z] = value;
         }
+        grid->transform = glm::scale(glm::mat4(1), bb_max - bb_min);
         return grid;
     }
     else

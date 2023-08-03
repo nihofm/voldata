@@ -81,9 +81,9 @@ BrickGrid::BrickGrid(const Grid& grid) :
                 indirection[brick] = 0;
                 // compute local range over dilated brick
                 float local_min = FLT_MAX, local_max = -FLT_MAX;
-                for (int z = -1; z < int(BRICK_SIZE) + 1; ++z) {
-                    for (int y = -1; y < int(BRICK_SIZE) + 1; ++y) {
-                        for (int x = -1; x < int(BRICK_SIZE) + 1; ++x) {
+                for (int z = -2; z < int(BRICK_SIZE) + 2; ++z) {
+                    for (int y = -2; y < int(BRICK_SIZE) + 2; ++y) {
+                        for (int x = -2; x < int(BRICK_SIZE) + 2; ++x) {
                             const float value = grid.lookup(glm::uvec3(glm::ivec3(brick * BRICK_SIZE) + glm::ivec3(x, y, z)));
                             local_min = std::min(local_min, value);
                             local_max = std::max(local_max, value);
