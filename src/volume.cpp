@@ -128,7 +128,7 @@ std::string Volume::to_string(const std::string& indent) const {
 }
 
 Volume::GridPtr Volume::load_grid(const std::string& filename, const std::string& gridname) {
-    fs::path path = filename;
+    const std::filesystem::path path = filename;
     std::string extension = path.extension().string();
     std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
     // handle serialized .dat files
@@ -235,19 +235,24 @@ Volume::GridPtr Volume::load_grid(const std::string& filename, const std::string
         // read meta data
         json11::Json meta;
         {
-            std::filesystem::path meta_path = path;
-            std::ifstream f_in(meta_path.replace_filename("volume_meta.json"));
+            std::ifstream f_in;
+            std::vector<std::filesystem::path> meta_paths = { path.parent_path() / "volume_meta.json", path.parent_path() / (path.stem().string() + "_volume.json")};
+            for (const auto& mp : meta_paths) {
+                f_in = std::ifstream(mp);
+                if (f_in.good()) break;
+            }
+            if (!f_in.good())
+                throw std::runtime_error("Failed to find .ply volume metadata");
             std::string file_contents(std::istreambuf_iterator<char>{f_in}, std::istreambuf_iterator<char>());
             std::string err;
             meta = json11::Json::parse(file_contents, err);
             if (!err.empty())
-                std::cerr << "Warning: JSON metadata parsing failed: " << err << std::endl;
+                throw std::runtime_error("JSON metadata parsing failed: " + err);
         }
         // read ply file
         happly::PLYData plyIn(path);
         std::vector<std::array<double, 3>> ply_vpos = plyIn.getVertexPositions();
         std::vector<std::array<uint8_t, 3>> ply_vcol = plyIn.getVertexColors();
-        // std::cout << "ply vertex count: " << ply_vpos.size() << ", ply vertex color count: " << ply_vcol.size() << std::endl;
         assert(ply_vpos.size() == ply_vcol.size());
         // construct dense grid and fill values (flip x and z axes to align coordinate systems)
         const auto x_range = meta["z_range"].array_items();
@@ -265,6 +270,7 @@ Volume::GridPtr Volume::load_grid(const std::string& filename, const std::string
             const glm::uvec3 idx = glm::uvec3(glm::vec3(grid->n_voxels) * (pos - bb_min) / (bb_max - bb_min));
             const uint8_t value = ply_vcol[i][0]; // intensity data in red channel
             grid->voxel_data[i] = value;
+            // TODO: correct data layout, don't assume matching layout
             // grid->voxel_data[idx.x * grid->n_voxels.y * grid->n_voxels.z + idx.y + grid->n_voxels.z + idx.z] = value;
         }
         grid->transform = glm::scale(glm::mat4(1), bb_max - bb_min);
