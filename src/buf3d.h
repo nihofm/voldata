@@ -16,7 +16,7 @@ public:
 
     inline void prune(size_t slices) {
         this->stride.z = slices;
-        data.resize(stride.x * stride.y * stride.z);
+        data.resize(size_t(stride.x) * stride.y * stride.z);
     }
 
     inline void resize(const glm::uvec3& stride) {
@@ -25,7 +25,7 @@ public:
     }
 
     inline size_t to_idx(const glm::uvec3& coord) const {
-        return coord.z * stride.x * stride.y + coord.y * stride.x + coord.x;
+        return size_t(coord.z) * stride.x * stride.y + coord.y * stride.x + coord.x;
     }
 
     inline glm::uvec3 to_coord(size_t idx) const {
