@@ -30,6 +30,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # imebra
 set(IMEBRA_SHARED_STATIC STATIC)
 add_subdirectory(submodules/imebra)
+target_compile_options(imebra PRIVATE -Wno-catch-value)
+target_compile_options(imebra PRIVATE -Wno-ignored-qualifiers)
+target_compile_options(imebra PRIVATE -Wno-range-loop-construct)
 
 # json11
 add_subdirectory(submodules/json11)
