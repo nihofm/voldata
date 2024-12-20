@@ -11,7 +11,6 @@ namespace fs = std::filesystem;
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/string_cast.hpp>
 #include <json11/json11.hpp>
-#include <happly/happly.h>
 
 namespace voldata {
 
@@ -79,11 +78,9 @@ Volume::BrickGridPtr Volume::current_grid_brick(const std::string& gridname) con
     return to_brick_grid(current_grid(gridname));
 }
 
-#ifdef VOLDATA_WITH_OPENVDB
 Volume::OpenVDBGridPtr Volume::current_grid_vdb(const std::string& gridname) const {
     return to_vdb_grid(current_grid(gridname));
 }
-#endif
 
 Volume::NanoVDBGridPtr Volume::current_grid_nvdb(const std::string& gridname) const {
     return to_nvdb_grid(current_grid(gridname));
@@ -193,12 +190,10 @@ Volume::GridPtr Volume::load_grid(const std::string& filename, const std::string
         grid->transform = glm::scale(glm::rotate(glm::mat4(1), float(1.5 * M_PI), glm::vec3(1, 0, 0)), slice_thickness);
         return grid;
     }
-#ifdef VOLDATA_WITH_OPENVDB
     // handle OpenVDB files
     else if (extension == ".vdb") {
         return std::make_shared<OpenVDBGrid>(path, gridname);
     }
-#endif
     // handle NanoVDB files
     else if (extension == ".nvdb") {
         return std::make_shared<NanoVDBGrid>(path, gridname);
@@ -230,52 +225,6 @@ Volume::GridPtr Volume::load_grid(const std::string& filename, const std::string
     else if (extension == ".brick") {
         return load_brick_grid(path);
     }
-    // handle ply point cloud
-    else if (extension == ".ply") {
-        // read meta data
-        json11::Json meta;
-        {
-            std::ifstream f_in;
-            std::vector<std::filesystem::path> meta_paths = { path.parent_path() / "volume_meta.json", path.parent_path() / (path.stem().string() + "_volume.json")};
-            for (const auto& mp : meta_paths) {
-                f_in = std::ifstream(mp);
-                if (f_in.good()) break;
-            }
-            if (!f_in.good())
-                throw std::runtime_error("Failed to find .ply volume metadata");
-            std::string file_contents(std::istreambuf_iterator<char>{f_in}, std::istreambuf_iterator<char>());
-            std::string err;
-            meta = json11::Json::parse(file_contents, err);
-            if (!err.empty())
-                throw std::runtime_error("JSON metadata parsing failed: " + err);
-        }
-        // read ply file
-        happly::PLYData plyIn(path);
-        std::vector<std::array<double, 3>> ply_vpos = plyIn.getVertexPositions();
-        std::vector<std::array<uint8_t, 3>> ply_vcol = plyIn.getVertexColors();
-        assert(ply_vpos.size() == ply_vcol.size());
-        // construct dense grid and fill values (flip x and z axes to align coordinate systems)
-        const auto x_range = meta["z_range"].array_items();
-        const auto y_range = meta["y_range"].array_items();
-        const auto z_range = meta["x_range"].array_items();
-        glm::vec3 bb_min(x_range[0].number_value(), y_range[0].number_value(), z_range[0].number_value());
-        glm::vec3 bb_max(x_range[x_range.size() - 1].number_value(), y_range[y_range.size() - 1].number_value(), z_range[z_range.size() - 1].number_value());
-        auto grid = std::make_shared<DenseGrid>();
-        grid->n_voxels = glm::uvec3(x_range.size(), y_range.size(), z_range.size());
-        grid->min_value = 0.f;//meta["min_intensity"].number_value();
-        grid->max_value = 1.f;//meta["max_intensity"].number_value();
-        grid->voxel_data = std::vector<uint8_t>(grid->num_voxels(), 0);
-        for (size_t i = 0; i < ply_vpos.size(); ++i) {
-            const glm::vec3 pos = glm::vec3(ply_vpos[i][0], ply_vpos[i][1], ply_vpos[i][2]);
-            const glm::uvec3 idx = glm::uvec3(glm::vec3(grid->n_voxels) * (pos - bb_min) / (bb_max - bb_min));
-            const uint8_t value = ply_vcol[i][0]; // intensity data in red channel
-            grid->voxel_data[i] = value;
-            // TODO: correct data layout, don't assume matching layout
-            // grid->voxel_data[idx.x * grid->n_voxels.y * grid->n_voxels.z + idx.y + grid->n_voxels.z + idx.z] = value;
-        }
-        grid->transform = glm::scale(glm::mat4(1), bb_max - bb_min);
-        return grid;
-    }
     else
         throw std::runtime_error("Unable to load file extension: " + extension);
 }
@@ -292,13 +241,11 @@ Volume::BrickGridPtr Volume::to_brick_grid(const GridPtr& grid) {
     return brick;
 }
 
-#ifdef VOLDATA_WITH_OPENVDB
 Volume::OpenVDBGridPtr Volume::to_vdb_grid(const GridPtr& grid) {
     auto vdb = std::dynamic_pointer_cast<OpenVDBGrid>(grid); // check type
     if (!vdb) vdb = std::make_shared<OpenVDBGrid>(grid); // type not matching, convert grid
     return vdb;
 }
-#endif
 
 Volume::NanoVDBGridPtr Volume::to_nvdb_grid(const GridPtr& grid) {
     auto nvdb = std::dynamic_pointer_cast<NanoVDBGrid>(grid); // check type

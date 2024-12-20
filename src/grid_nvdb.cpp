@@ -1,6 +1,7 @@
 #include "grid_nvdb.h"
-#include <nanovdb/util/IO.h>
-#include <nanovdb/util/GridBuilder.h>
+#include <nanovdb/io/IO.h>
+#include <nanovdb/tools/GridBuilder.h>
+#include <nanovdb/tools/CreateNanoGrid.h>
 
 namespace voldata {
 
@@ -30,7 +31,7 @@ NanoVDBGrid::NanoVDBGrid(const Grid& other) : Grid(other) {
     const auto [min, maj] = other.minorant_majorant();
     const auto isize = other.index_extent();
     // create fog volume grid
-    auto builder = nanovdb::GridBuilder<float>(0.f, nanovdb::GridClass::FogVolume);
+    nanovdb::tools::build::Grid<float> builder(0.f);
     auto acc = builder.getAccessor();
     for (uint32_t z = 0; z < isize.z; ++z) {
         for (uint32_t y = 0; y < isize.y; ++y) {
@@ -41,10 +42,9 @@ NanoVDBGrid::NanoVDBGrid(const Grid& other) : Grid(other) {
             }
         }
     }
-    handle = builder.getHandle<>();
+    handle = nanovdb::tools::createNanoGrid(builder);
     grid = handle.grid<float>();
-    if (!grid || !grid->isValid() || !grid->isFogVolume())
-        throw std::runtime_error("Empty or invalid NanoVDB grid!");
+    if (!grid || !grid->isValid()) throw std::runtime_error("Empty or invalid NanoVDB grid!");
     // compute index bounding box
     const nanovdb::CoordBBox ibb = grid->indexBBox();
     ibb_min = grid->isEmpty() ? glm::vec3(0) : glm::vec3(ibb.min()[0], ibb.min()[1], ibb.min()[2]);

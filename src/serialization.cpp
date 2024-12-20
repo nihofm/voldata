@@ -1,8 +1,6 @@
 #include "serialization.h"
 #include "grid_nvdb.h"
-#ifdef VOLDATA_WITH_OPENVDB
 #include "grid_vdb.h"
-#endif
 
 #include <fstream>
 
@@ -57,10 +55,8 @@ namespace voldata {
             write<DenseGrid>(*dense, path);
         else if(BrickGrid* brick = dynamic_cast<BrickGrid*>(grid.get()))
             write<BrickGrid>(*brick, path);
-#ifdef VOLDATA_WITH_OPENVDB
         else if(OpenVDBGrid* vdb = dynamic_cast<OpenVDBGrid*>(grid.get()))
             vdb->write(path); // write out vdb file
-#endif
         else if(NanoVDBGrid* nvdb = dynamic_cast<NanoVDBGrid*>(grid.get()))
             nvdb->write(path); // write out nvdb file
         else

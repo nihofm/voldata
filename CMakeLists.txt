@@ -34,6 +34,9 @@ add_subdirectory(submodules/imebra)
 # json11
 add_subdirectory(submodules/json11)
 
+# openvdb
+add_subdirectory(submodules/openvdb)
+
 # ---------------------------------------------------------------------
 # directory management
 
@@ -45,30 +48,19 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 # compile main library
 
 file(GLOB SOURCES "src/*.cpp")
-add_library(voldata SHARED ${SOURCES})
+add_library(voldata STATIC ${SOURCES})
 
 # includes
 target_include_directories(voldata PUBLIC src)
 target_include_directories(voldata PUBLIC submodules)
+target_include_directories(voldata PUBLIC submodules/cereal/include)
 target_include_directories(voldata PUBLIC submodules/glm)
-target_include_directories(voldata PRIVATE submodules/cereal/include)
-target_include_directories(voldata PRIVATE submodules/imebra/library/include)
+target_include_directories(voldata PUBLIC submodules/imebra/library/include)
+target_include_directories(voldata PUBLIC submodules/openvdb/openvdb)
+target_include_directories(voldata PUBLIC submodules/openvdb/nanovdb)
 
 # linking
-target_link_libraries(voldata stdc++fs imebra tbb json11)
-
-# try to find openvdb
-list(APPEND CMAKE_MODULE_PATH "/usr/local/lib/cmake/OpenVDB") # support default non-standard OpenVDB install location
-find_package(OpenVDB)
-if (OpenVDB_FOUND)
-    message(STATUS "Found OpenVDB version: ${OpenVDB_VERSION}, compiling with OpenVDB support...")
-    add_definitions(-DVOLDATA_WITH_OPENVDB)
-    target_include_directories(voldata PRIVATE ${OpenVDB_INCLUDE_DIRS})
-    target_link_libraries(voldata ${OpenVDB_LIBRARIES})
-else()
-    message(STATUS "OpenVDB NOT found, compiling without OpenVDB support...")
-    add_definitions(-UVOLDATA_WITH_OPENVDB)
-endif()
+target_link_libraries(voldata PUBLIC stdc++fs imebra tbb json11 openvdb)
 
 # ---------------------------------------------------------------------
 # optionally compile tools
@@ -76,8 +68,8 @@ endif()
 if (VOLDATA_BUILD_TOOLS)
     # simple executable to print grid info
     add_executable(voldata_print tools/print.cpp)
-    target_link_libraries(voldata_print voldata)
+    target_link_libraries(voldata_print PRIVATE voldata)
     # simple executable to load, convert and serialize grid formats
     add_executable(voldata_serialize tools/serialize.cpp)
-    target_link_libraries(voldata_serialize voldata)
+    target_link_libraries(voldata_serialize PRIVATE voldata)
 endif()

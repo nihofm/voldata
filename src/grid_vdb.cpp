@@ -1,8 +1,6 @@
 #include "grid_vdb.h"
 #include <glm/gtx/string_cast.hpp>
 
-#ifdef VOLDATA_WITH_OPENVDB
-
 namespace voldata {
 
 OpenVDBGrid::OpenVDBGrid(const fs::path& filename, const std::string& gridname) {
@@ -117,5 +115,3 @@ void OpenVDBGrid::write(const fs::path& path) const {
 }
 
 }
-
-#endif

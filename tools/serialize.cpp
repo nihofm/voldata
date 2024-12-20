@@ -28,13 +28,11 @@ int main(int argc, char** argv) {
     std::shared_ptr<voldata::BrickGrid> brick_grid = std::make_shared<voldata::BrickGrid>(volume->current_grid());
     voldata::write_grid(brick_grid, path_brick);
 
-#ifdef VOLDATA_WITH_OPENVDB
     std::cout << "------------------" << std::endl;
     std::filesystem::path path_vdb = path.filename().replace_extension(".vdb");
     std::cout << "Serializing VDB grid: " << path_vdb << "..." << std::endl;
     std::shared_ptr<voldata::OpenVDBGrid> vdb_grid = std::make_shared<voldata::OpenVDBGrid>(volume->current_grid());
     voldata::write_grid(vdb_grid, path_vdb);
-#endif
 
     std::cout << "------------------" << std::endl;
     std::filesystem::path path_nvdb = path.filename().replace_extension(".nvdb");

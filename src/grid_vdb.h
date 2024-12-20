@@ -1,16 +1,13 @@
 #pragma once
 
 #include "grid.h"
-#ifdef VOLDATA_WITH_OPENVDB
 #include <openvdb/openvdb.h>
-#endif
 
 #include <filesystem>
 namespace fs = std::filesystem;
 
 namespace voldata {
 
-#ifdef VOLDATA_WITH_OPENVDB
 class OpenVDBGrid : public Grid {
 public:
     OpenVDBGrid(const fs::path& filename, const std::string& gridname = "density");
@@ -33,6 +30,5 @@ public:
     glm::uvec3 extent;
     float minorant, majorant;
 };
-#endif
 
 }
